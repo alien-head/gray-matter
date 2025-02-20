@@ -88,7 +88,6 @@ fun Application.module() {
         network.addPeers(peersAndDonor)
 
         // Download the blockchain
-        // TODO paginate through the blockchain and get every block.
         response = runBlocking { httpClient.get("$donorNode/blockchain?page=0") }
         if (response.status != HttpStatusCode.OK) {
             throw RuntimeException("Failed to download the blockchain from address: $donorNode")
