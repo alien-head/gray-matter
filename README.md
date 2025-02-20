@@ -45,6 +45,7 @@ The roadmap is organized into several categories:
 * Donor node: a node that is used to get the blockchain and the list of nodes in the network.
 * Publisher node: a node in the network that has permission to mint blocks. 
 * Proof of Authority: the consensus mechanism for Gray. Only certain nodes can mint new blocks.
+* Transaction: a single news article with its metadata.
 
 ### Starting up for the first time
 The application should be provided with a donor node url address from an existing network.
