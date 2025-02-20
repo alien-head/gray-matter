@@ -55,13 +55,15 @@ data class Blockchain(
         if (unprocessedArticles.size >= 10) {
             val data = Json.encodeToString(unprocessedArticles)
             val timestamp = Instant.now().toEpochMilli()
-            val previousHash = chain.last().hash
+            val latestBlock = chain.last()
+            val previousHash = latestBlock.hash
 
             chain.add(
                 Block(
                     previousHash,
                     data,
                     timestamp,
+                    latestBlock.height + 1u
                 )
             )
 
@@ -80,6 +82,7 @@ data class Block(
     // Data represents articles that have been minted into a json string
     val data: String,
     val timestamp: Long,
+    val height: UInt,
 ) {
     val hash = hash(previousHash + timestamp + data)
 }

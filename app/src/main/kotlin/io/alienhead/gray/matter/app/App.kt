@@ -201,6 +201,7 @@ fun Application.blockchainModule(isGenesis: Boolean): Blockchain {
                     "",
                     "Genesis",
                     Instant.now().toEpochMilli(),
+                    0u,
                 )
             )
         )
