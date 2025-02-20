@@ -1,4 +1,4 @@
-package io.alienhead.grey.matter
+package io.alienhead.gray.matter
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

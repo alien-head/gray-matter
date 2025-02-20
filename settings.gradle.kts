@@ -1,3 +1,3 @@
-rootProject.name = "grey-matter"
+rootProject.name = "gray-matter"
 
 include(":app")

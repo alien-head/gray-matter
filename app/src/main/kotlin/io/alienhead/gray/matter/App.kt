@@ -1,4 +1,4 @@
-package io.alienhead.grey.matter
+package io.alienhead.gray.matter
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -21,14 +21,22 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-suspend fun Application.module() {
+fun Application.module() {
+    /**
+     * Environment Variables
+     *
+     * Optional variables use propertyOrNull() while required properties use property()
+     */
     val selfAddress = environment.config.property("ktor.node.address").getString()
-    val donorNode = environment.config.propertyOrNull("node.donor")
+    val donorNode = environment.config.propertyOrNull("ktor.node.donor")?.getString()
+    val nodeMode = environment.config.property("ktor.node.mode").getString()
 
     install(ContentNegotiation) {
         json(Json {
@@ -38,8 +46,12 @@ suspend fun Application.module() {
 
     val blockchain = blockchainModule(donorNode == null)
 
-    // TODO change self address to environment variable
-    val network = Network(mutableListOf(Node(selfAddress, NodeType.SELF)))
+    val network = Network(mutableListOf())
+
+    val nodeInfo = NodeInfo(
+        address = selfAddress,
+        type = NodeType.valueOf(nodeMode)
+    )
 
     // If a donor node has been specified,
     // get the blockchain, transactions, and network from it
@@ -50,11 +62,27 @@ suspend fun Application.module() {
             }
         }
 
-        val response = httpClient.get("$donorNode/network")
+        var response = runBlocking  { httpClient.get("$donorNode/network") }
 
         if (response.status != HttpStatusCode.OK) {
             throw RuntimeException("Failed to load from donor node with address: $donorNode")
         }
+
+        val peers = runBlocking { response.body<Network>().peers().toMutableList() }
+
+        // Also get the donor node's info
+        response = runBlocking { httpClient.get("$donorNode/info") }
+        if (response.status != HttpStatusCode.OK) {
+            throw RuntimeException("Failed to load from donor node with address: $donorNode")
+        }
+
+        val donorNodeInfo = runBlocking { response.body<Info>() }
+
+        val peersAndDonor = peers + donorNodeInfo.node.toNode()
+
+        network.addPeers(peersAndDonor)
+
+        // TODO Get the blockchain
     }
 
     routing {
@@ -62,23 +90,38 @@ suspend fun Application.module() {
             call.respondText("Hello World!")
         }
 
+        get("/info") {
+            call.respond(Info(nodeInfo))
+        }
+
         route("/network") {
+            /**
+             * Gets the full network object.
+             *
+             * Mostly used to see all peers in the network.
+             */
             get {
                 call.respond(network)
             }
 
             route("/node") {
+
+                /**
+                 * Add a node to the network.
+                 * If url param 'broadcast' is true,
+                 * send the node to all peers too.
+                 */
                 post {
 
                     val broadcast = call.parameters["broadcast"]
 
                     val node = call.receive<Node>()
 
-                    if (node.type == NodeType.SELF || node.address.isBlank()) {
+                    if (node.address.isBlank()) {
                         call.respond(HttpStatusCode.BadRequest)
                     }
 
-                    val added = network.addNode(node)
+                    val added = network.addPeer(node)
 
                     // Broadcast the addition of the node to the network
                     if (broadcast?.toBooleanStrictOrNull() == true && added) {
@@ -88,12 +131,12 @@ suspend fun Application.module() {
                             }
                         }
 
-                        network.nodes()
+                        network.peers()
                             .filter {
-                                it.type != NodeType.SELF && it.address != node.address
+                                it.address != node.address
                             }
                             .forEach {
-                                log.info("Broadcasting new node to: ${it.address}")
+                                log.info("Broadcasting new peer to: ${it.address}")
                                 client.post("${it.address}/network/node?broadcast=true") {
                                     contentType(ContentType.Application.Json)
                                     setBody(node)
@@ -109,6 +152,10 @@ suspend fun Application.module() {
         }
 
         route("/blockchain") {
+
+            /**
+             * Gets a section of the blockchain with url params page and size
+             */
             get {
                 val page = call.parameters["page"]?.toIntOrNull()
                 val size = call.parameters["size"]?.toIntOrNull()
