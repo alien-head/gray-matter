@@ -3,9 +3,6 @@ package io.alienhead.gray.matter.blockchain
 import io.alienhead.gray.matter.crypto.hash
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.io.UnsupportedEncodingException
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 import java.time.Instant
 
 /**
@@ -16,6 +13,8 @@ data class Blockchain(
     val chain: MutableList<Block>,
     private val unprocessedArticles: MutableList<Article> = mutableListOf(),
 ) {
+    val unprocessedCount get() = unprocessedArticles.size
+
     /**
      * Returns a set of blocks from the blockchain by page number and size.
      * If size is null, use the default of 10.

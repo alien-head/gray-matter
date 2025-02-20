@@ -1,6 +1,7 @@
 package io.alienhead.gray.matter.blockchain
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -35,6 +36,8 @@ class BlockchainTest : DescribeSpec({
 
                     newBlock.previousHash shouldBe genesisBlock.hash
                     newBlock.height shouldBe 1u
+
+                    blockchain.unprocessedCount shouldBe 0
                 }
             }
         }
