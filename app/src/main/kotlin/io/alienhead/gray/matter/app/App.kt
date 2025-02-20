@@ -91,7 +91,6 @@ fun Application.module() {
         var page = 0
         val size = 10
 
-        // TODO paginate through the blockchain and get every block.
         response = runBlocking { httpClient.get("$donorNode/blockchain?page=0&size=$size") }
         if (response.status != HttpStatusCode.OK) {
             throw RuntimeException("Failed to download the blockchain from address: $donorNode")
