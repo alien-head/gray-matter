@@ -1,5 +1,6 @@
 package io.alienhead.gray.matter.blockchain
 
+import io.alienhead.gray.matter.crypto.hash
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.UnsupportedEncodingException
@@ -105,15 +106,4 @@ data class Article(
     val date: String,
 ) {
     val id = hash(publisherId + byline + headline + section + content + date)
-}
-
-fun hash(data: String) = try {
-    val digest = MessageDigest.getInstance("SHA-256")
-    val bytes = digest.digest(data.toByteArray(Charsets.UTF_8))
-
-    bytes.joinToString("") { "%02x".format(it) }
-} catch( e: NoSuchAlgorithmException) {
-    ""
-} catch( e: UnsupportedEncodingException) {
-    ""
 }

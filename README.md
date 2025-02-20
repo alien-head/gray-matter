@@ -11,6 +11,13 @@ or run it directly from the terminal:
 
 # Docs
 
+## Organization
+The repository is split into several packages:
+* app: the main logic for starting the application, serving the JSON API, etc.
+* blockchain: everything to do with just the blockchain
+* crypto: cryptography utilities
+* network: everything to do with the networking layer and nodes
+
 ## Environment Variables
 * `PORT`: the given port for the app to run on. Defaults to 8081 if not provided.
 * `NODE_ADDRESS`: the url address (host, port, etc.) for accessing the node. Broadcast to the other nodes in the network. Required.

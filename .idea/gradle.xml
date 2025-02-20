@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/blockchain" />
+            <option value="$PROJECT_DIR$/crypto" />
             <option value="$PROJECT_DIR$/network" />
           </set>
         </option>
