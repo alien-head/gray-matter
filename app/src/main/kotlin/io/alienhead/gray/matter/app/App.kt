@@ -51,8 +51,6 @@ fun Application.module() {
         })
     }
 
-    val blockchain = blockchainModule(donorNode == null)
-
     val network = Network(NetworkWebClient(), mutableListOf())
 
     val nodeInfo = NodeInfo(
@@ -62,7 +60,7 @@ fun Application.module() {
 
     // If a donor node has been specified,
     // get the blockchain, transactions, and network from it
-    if (donorNode != null) {
+    val blockchain = if (donorNode != null) {
         val httpClient = HttpClient(CIO) {
             install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
                 json()
@@ -89,7 +87,14 @@ fun Application.module() {
 
         network.addPeers(peersAndDonor)
 
-        // TODO Get the blockchain
+        // Download the blockchain
+        // TODO paginate through the blockchain and get every block.
+        response = runBlocking { httpClient.get("$donorNode/blockchain?page=0") }
+        if (response.status != HttpStatusCode.OK) {
+            throw RuntimeException("Failed to download the blockchain from address: $donorNode")
+        }
+
+        val blocks = runBlocking { response.body<List<Block>>() }
 
         // Update the donor node with the new peer
         response = runBlocking { httpClient.post("$donorNode/network/node?broadcast=true") {
@@ -100,6 +105,10 @@ fun Application.module() {
             // TODO since we have a list of nodes, go down the list and keep trying other nodes
             throw RuntimeException("Failed to submit self to the network to address: $donorNode")
         }
+
+        Blockchain(chain = blocks.toMutableList())
+    } else {
+         Blockchain(chain = mutableListOf(Block.genesis()))
     }
 
     routing {
@@ -159,12 +168,22 @@ fun Application.module() {
 
                 call.respond(HttpStatusCode.OK, subchain)
             }
+
+            route("/block") {
+                post {
+                    val newBlock = call.receive<Block>()
+
+                    blockchain.processBlock(newBlock)
+                }
+            }
         }
 
         route("/article") {
             /**
              * Processes the article. If enough articles are processed, mint a new block.
              * TODO notify the network of the new block.
+             * TODO only a node running in PUBLISHER mode should be able to accept an unprocessed article.
+             * TODO only a PUBLISHER node that is the selected broadcaster should be able to broadcast the new block.
              */
             post {
                 val article = call.receive<Article>()
@@ -183,6 +202,10 @@ fun Application.module() {
 
                 if (mintedBlock != null) {
                     call.application.engine.environment.log.info("Minted a new block: $mintedBlock")
+
+                    // Broadcast the new block to peers
+                    network.broadcastBlock(mintedBlock)
+
                     call.response.status(HttpStatusCode.Created)
                 } else {
                     call.application.engine.environment.log.info("Processed a new article")
@@ -190,22 +213,5 @@ fun Application.module() {
                 }
             }
         }
-    }
-}
-
-fun Application.blockchainModule(isGenesis: Boolean): Blockchain {
-    return if (isGenesis) {
-        Blockchain(
-            chain = mutableListOf(
-                Block(
-                    "",
-                    "Genesis",
-                    Instant.now().toEpochMilli(),
-                    0u,
-                )
-            )
-        )
-    } else {
-        Blockchain(chain = mutableListOf())
     }
 }

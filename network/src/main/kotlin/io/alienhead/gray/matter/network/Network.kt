@@ -1,5 +1,6 @@
 package io.alienhead.gray.matter.network
 
+import io.alienhead.gray.matter.blockchain.Block
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.post
@@ -86,13 +87,19 @@ data class Network(
 //                    log.info("Broadcasting new peer to: ${it.address}")
                     client.broadcastPeer(it.address, node)
                 }
+        }
+    }
 
+    suspend fun broadcastBlock(newBlock: Block) {
+        peers.forEach {
+            client.broadcastBlock(it.address, newBlock)
         }
     }
 }
 
 interface NetworkClient {
     suspend fun broadcastPeer(address: String, node: Node)
+    suspend fun broadcastBlock(address: String, block: Block)
 }
 
 class NetworkWebClient: NetworkClient {
@@ -103,9 +110,16 @@ class NetworkWebClient: NetworkClient {
     }
 
     override suspend fun broadcastPeer(address: String, node: Node) {
-        client.post("${address}/network/node?broadcast=true") {
+        client.post("$address/network/node?broadcast=true") {
             contentType(ContentType.Application.Json)
             setBody(node)
+        }
+    }
+
+    override suspend fun broadcastBlock(address: String, block: Block) {
+        client.post("$address/blockchain/block") {
+            contentType(ContentType.Application.Json)
+            setBody(block)
         }
     }
 }
