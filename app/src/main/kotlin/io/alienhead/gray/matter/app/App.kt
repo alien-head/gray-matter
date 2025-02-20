@@ -181,8 +181,8 @@ fun Application.module() {
 
                 val mintedBlock = blockchain.processArticle(article)
 
-                if (mintedBlock) {
-                    call.application.engine.environment.log.info("Minted a new block: ${blockchain.chain.last()}")
+                if (mintedBlock != null) {
+                    call.application.engine.environment.log.info("Minted a new block: $mintedBlock")
                     call.response.status(HttpStatusCode.Created)
                 } else {
                     call.application.engine.environment.log.info("Processed a new article")

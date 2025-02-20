@@ -45,7 +45,7 @@ data class Blockchain(
         return true
     }
 
-    fun processArticle(article: Article): Boolean {
+    fun processArticle(article: Article): Block? {
         unprocessedArticles.add(article)
 
         /*
@@ -58,21 +58,35 @@ data class Blockchain(
             val latestBlock = chain.last()
             val previousHash = latestBlock.hash
 
-            chain.add(
-                Block(
-                    previousHash,
-                    data,
-                    timestamp,
-                    latestBlock.height + 1u
-                )
+            val newBlock = Block(
+                previousHash,
+                data,
+                timestamp,
+                latestBlock.height + 1u
             )
+            chain.add(newBlock)
 
             unprocessedArticles.clear()
 
-            return true
+            return newBlock
         }
 
-        return false
+        return null
+    }
+
+    /**
+     * When adding a block from another node, verify and process it.
+     * If it fails to verify, do not add it to the chain.
+     */
+    fun processBlock(block: Block): Boolean {
+        val latestBlock = chain.last()
+
+        if (block.height <= chain.size.toUInt() - 1u) return false
+
+        if (block.previousHash != latestBlock.hash) return false
+
+        chain.add(block)
+        return true
     }
 }
 
@@ -85,6 +99,17 @@ data class Block(
     val height: UInt,
 ) {
     val hash = hash(previousHash + timestamp + data)
+
+    companion object {
+        fun genesis(): Block {
+            return Block(
+                "",
+                "Genesis",
+                Instant.now().toEpochMilli(),
+                0u,
+            )
+        }
+    }
 }
 
 @Serializable
