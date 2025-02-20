@@ -1,4 +1,4 @@
-# grey-matter
+# gray-matter
 
 This project uses [Gradle](https://gradle.org/).
 To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,
@@ -29,7 +29,7 @@ The repository is split into several packages:
 * Node: a member of a network.
 * Genesis node: the first member of the network. Creates the genesis block.
 * Donor node: a node that is used to get the blockchain and the list of nodes in the network.
-* Author node: a node in the network that has permission to mint blocks. 
+* Publisher node: a node in the network that has permission to mint blocks. 
 * Proof of Authority: the consensus mechanism for Gray. Only certain nodes can mint new blocks.
 
 ### Starting up for the first time
