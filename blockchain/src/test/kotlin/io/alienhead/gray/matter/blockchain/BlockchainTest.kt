@@ -64,6 +64,17 @@ class BlockchainTest : DescribeSpec({
 
                 blockchain.processBlock(badBlock) shouldBe false
             }
+
+            it("should reject block with timestamp in the past") {
+                val genesisBlock = Block.genesis()
+                val blockchain = Blockchain(mutableListOf(genesisBlock))
+                val goodBlock = randomBlock(genesisBlock.hash, genesisBlock.height + 1u)
+
+                blockchain.processBlock(goodBlock) shouldBe true
+
+                val badBlock = randomBlock(goodBlock.hash, goodBlock.height + 1u, goodBlock.timestamp - 1)
+                blockchain.processBlock(badBlock) shouldBe false
+            }
         }
     }
 
@@ -78,10 +89,10 @@ class BlockchainTest : DescribeSpec({
     }
 })
 
-fun randomBlock(previousHash: String, height: UInt) = Block(
+fun randomBlock(previousHash: String, height: UInt, timestamp: Long = Instant.now().toEpochMilli()) = Block(
     previousHash = previousHash,
     data = "test",
-    timestamp = Instant.now().toEpochMilli(),
+    timestamp = timestamp,
     height = height,
 )
 

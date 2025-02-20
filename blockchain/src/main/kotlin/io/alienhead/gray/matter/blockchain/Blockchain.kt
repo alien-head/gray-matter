@@ -84,6 +84,8 @@ data class Blockchain(
 
         if (block.previousHash != latestBlock.hash) return false
 
+        if (block.timestamp <= latestBlock.timestamp) return false
+
         chain.add(block)
         return true
     }
