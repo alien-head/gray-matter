@@ -83,6 +83,16 @@ fun Application.module() {
         network.addPeers(peersAndDonor)
 
         // TODO Get the blockchain
+
+        // Update the donor node with the new peer
+        response = runBlocking { httpClient.post("$donorNode/network/node?broadcast=true") {
+            contentType(ContentType.Application.Json)
+            setBody(nodeInfo.toNode())
+        } }
+        if (response.status != HttpStatusCode.OK) {
+            // TODO since we have a list of nodes, go down the list and keep trying other nodes
+            throw RuntimeException("Failed to submit self to the network to address: $donorNode")
+        }
     }
 
     routing {
