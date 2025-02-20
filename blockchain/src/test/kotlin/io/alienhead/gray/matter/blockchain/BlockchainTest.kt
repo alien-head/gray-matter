@@ -1,7 +1,7 @@
 package io.alienhead.gray.matter.blockchain
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -11,6 +11,43 @@ import java.time.LocalDate
 
 class BlockchainTest : DescribeSpec({
     describe("Blockchain") {
+        describe("chain") {
+            it("should return a list of 10 blocks") {
+                val blockchain = Blockchain(mutableListOf(
+                    Block.genesis(),
+                    randomBlock("", 1u),
+                    randomBlock("", 2u),
+                    randomBlock("", 3u),
+                    randomBlock("", 4u),
+                    randomBlock("", 5u),
+                    randomBlock("", 6u),
+                    randomBlock("", 7u),
+                    randomBlock("", 8u),
+                    randomBlock("", 9u),
+                ))
+
+                blockchain.chain(0, null) shouldHaveSize 10
+            }
+
+            it("should return a list of 5 blocks when size of 5 is selected") {
+                val blockchain = Blockchain(mutableListOf(
+                    Block.genesis(),
+                    randomBlock("", 1u),
+                    randomBlock("", 2u),
+                    randomBlock("", 3u),
+                    randomBlock("", 4u),
+                    randomBlock("", 5u),
+                    randomBlock("", 6u),
+                    randomBlock("", 7u),
+                    randomBlock("", 8u),
+                    randomBlock("", 9u),
+                ))
+
+                blockchain.chain(0, 5) shouldHaveSize 5
+                blockchain.chain(1, 5) shouldHaveSize 5
+            }
+        }
+
         describe("processArticle") {
 
             it("should accept valid article") {
@@ -46,7 +83,7 @@ class BlockchainTest : DescribeSpec({
             it("should accept block with valid height and matching previousHash") {
                 val genesisBlock = Block.genesis()
                 val blockchain = Blockchain(mutableListOf(genesisBlock))
-                val goodBlock = randomBlock(genesisBlock.hash, genesisBlock.height + 1u)
+                val goodBlock = randomBlock(genesisBlock.hash, genesisBlock.height + 1u, genesisBlock.timestamp + 1)
 
                 blockchain.processBlock(goodBlock) shouldBe true
             }
@@ -68,7 +105,7 @@ class BlockchainTest : DescribeSpec({
             it("should reject block with timestamp in the past") {
                 val genesisBlock = Block.genesis()
                 val blockchain = Blockchain(mutableListOf(genesisBlock))
-                val goodBlock = randomBlock(genesisBlock.hash, genesisBlock.height + 1u)
+                val goodBlock = randomBlock(genesisBlock.hash, genesisBlock.height + 1u, genesisBlock.timestamp + 1)
 
                 blockchain.processBlock(goodBlock) shouldBe true
 

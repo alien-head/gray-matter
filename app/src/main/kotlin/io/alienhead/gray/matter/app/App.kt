@@ -88,13 +88,29 @@ fun Application.module() {
         network.addPeers(peersAndDonor)
 
         // Download the blockchain
+        var page = 0
+        val size = 10
+
         // TODO paginate through the blockchain and get every block.
-        response = runBlocking { httpClient.get("$donorNode/blockchain?page=0") }
+        response = runBlocking { httpClient.get("$donorNode/blockchain?page=0&size=$size") }
         if (response.status != HttpStatusCode.OK) {
             throw RuntimeException("Failed to download the blockchain from address: $donorNode")
         }
 
-        val blocks = runBlocking { response.body<List<Block>>() }
+        var blocks = runBlocking { response.body<MutableList<Block>>() }
+        val totalChain = blocks
+
+        page++
+        while (blocks.isNotEmpty()) {
+            response = runBlocking { httpClient.get("$donorNode/blockchain?page=$page&size=$size") }
+            if (response.status != HttpStatusCode.OK) {
+                throw RuntimeException("Failed to download the blockchain from address: $donorNode")
+            }
+            blocks = runBlocking { response.body<MutableList<Block>>() }
+
+            totalChain.addAll(blocks)
+            page++
+        }
 
         // Update the donor node with the new peer
         response = runBlocking { httpClient.post("$donorNode/network/node?broadcast=true") {
@@ -106,7 +122,7 @@ fun Application.module() {
             throw RuntimeException("Failed to submit self to the network to address: $donorNode")
         }
 
-        Blockchain(chain = blocks.toMutableList())
+        Blockchain(chain = totalChain)
     } else {
          Blockchain(chain = mutableListOf(Block.genesis()))
     }
@@ -181,7 +197,6 @@ fun Application.module() {
         route("/article") {
             /**
              * Processes the article. If enough articles are processed, mint a new block.
-             * TODO notify the network of the new block.
              * TODO only a node running in PUBLISHER mode should be able to accept an unprocessed article.
              * TODO only a PUBLISHER node that is the selected broadcaster should be able to broadcast the new block.
              */
