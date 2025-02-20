@@ -18,7 +18,8 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:1.5.16")
 
-    implementation(":network")
+    implementation(project(":network"))
+    implementation(project(":blockchain"))
 }
 
 application {

@@ -1,4 +1,4 @@
-package io.alienhead.gray.matter.app
+package io.alienhead.gray.matter.blockchain
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
