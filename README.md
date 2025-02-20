@@ -1,13 +1,6 @@
 # gray-matter
 
-This project uses [Gradle](https://gradle.org/).
-To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,
-or run it directly from the terminal:
-
-* Run `./gradlew run` to build and run the application.
-* Run `./gradlew build` to only build the application.
-* Run `./gradlew check` to run all checks, including tests.
-* Run `./gradlew clean` to clean all build outputs.
+Gray Matter is a blockchain and network used to secure news articles from edits, tampering, and censorship.
 
 # Docs
 
@@ -19,6 +12,15 @@ The repository is split into several packages:
 * blockchain: everything to do with just the blockchain
 * crypto: cryptography utilities
 * network: everything to do with the networking layer and nodes
+
+This project uses [Gradle](https://gradle.org/).
+To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,
+or run it directly from the terminal:
+
+* Run `./gradlew run` to build and run the application.
+* Run `./gradlew build` to only build the application.
+* Run `./gradlew check` to run all checks, including tests.
+* Run `./gradlew clean` to clean all build outputs.
 
 ### Project
 A roadmap can be found here: https://github.com/orgs/alien-head/projects/3/views/1
