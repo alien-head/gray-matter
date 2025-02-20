@@ -12,17 +12,31 @@ or run it directly from the terminal:
 # Docs
 
 ## Organization
+
+### Repository
 The repository is split into several packages:
 * app: the main logic for starting the application, serving the JSON API, etc.
 * blockchain: everything to do with just the blockchain
 * crypto: cryptography utilities
 * network: everything to do with the networking layer and nodes
 
+### Project
+A roadmap can be found here: https://github.com/orgs/alien-head/projects/3/views/1
+
+The roadmap is organized into several categories:
+* blockchain: changes that affect the behavior of the blockchain
+* network: changes that affect the behavior of the network
+* consensus: changes that affect the consensus algorithm(s)
+* meta: changes that do not fit into the previous categories (tests, library upgrades, documentation updates, etc.)
+
+
 ## Environment Variables
 * `PORT`: the given port for the app to run on. Defaults to 8081 if not provided.
 * `NODE_ADDRESS`: the url address (host, port, etc.) for accessing the node. Broadcast to the other nodes in the network. Required.
 * `NODE_DONOR`: the url address (host, port, etc.) for accessing another node to populate the blockchain and network pool. If not populated, the node will run in genesis mode. (See Network/Starting up for the first time)
-* `NODE_MODE`: the mode to run the node in: `AUTHOR` or `BASIC`. If `AUTHOR` is selected, `AUTHOR_PRIVATE_KEY` is required.
+* `NODE_MODE`: the mode to run the node in: `PUBLISHER` or `REPLICA`.
+  * `PUBLISHER`: a node that has the ability to publish transactions (articles), mint blocks, and broadcast new blocks to the network.
+  * `REPLICA`: a node that is a full replica of the network and blockchain. Receives updates from publisher nodes.
 
 ## Network
 ### Terminology
