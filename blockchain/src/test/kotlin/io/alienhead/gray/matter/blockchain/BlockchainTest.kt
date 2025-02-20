@@ -1,47 +1,63 @@
 package io.alienhead.gray.matter.blockchain
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldBeEmpty
 import java.time.Instant
+import java.time.LocalDate
 
 class BlockchainTest : DescribeSpec({
     describe("Blockchain") {
+        describe("processArticle") {
+
+            it("should accept valid article") {
+                val blockchain = Blockchain(mutableListOf(Block.genesis()))
+
+                val goodArticle = randomArticle()
+
+                // Adding one article should not create a block
+                blockchain.processArticle(goodArticle).shouldBeNull()
+            }
+
+            describe("maximum amount of articles") {
+                it("should mint new block") {
+                    val genesisBlock = Block.genesis()
+                    val blockchain = Blockchain(mutableListOf(genesisBlock))
+
+                    // First add the maximum amount of articles
+                    repeat(9) {
+                        blockchain.processArticle(randomArticle()).shouldBeNull()
+                    }
+
+                    val newBlock = blockchain.processArticle(randomArticle()).shouldNotBeNull()
+
+                    newBlock.previousHash shouldBe genesisBlock.hash
+                    newBlock.height shouldBe 1u
+                }
+            }
+        }
 
         describe("processBlock") {
             it("should accept block with valid height and matching previousHash") {
                 val genesisBlock = Block.genesis()
                 val blockchain = Blockchain(mutableListOf(genesisBlock))
-                val goodBlock = Block(
-                    previousHash = genesisBlock.hash,
-                    data = "test",
-                    timestamp = Instant.now().toEpochMilli(),
-                    height = 1u,
-                )
+                val goodBlock = randomBlock(genesisBlock.hash, genesisBlock.height + 1u)
 
                 blockchain.processBlock(goodBlock) shouldBe true
             }
 
             it("should reject block with invalid height") {
                 val blockchain = Blockchain(mutableListOf(Block.genesis()))
-                val badBlock = Block(
-                    previousHash = "",
-                    data = "test",
-                    timestamp = Instant.now().toEpochMilli(),
-                    height = 0u,
-                )
+                val badBlock = randomBlock("", 0u)
 
                 blockchain.processBlock(badBlock) shouldBe false
             }
 
             it("should reject block without matching previousHash") {
                 val blockchain = Blockchain(mutableListOf(Block.genesis()))
-                val badBlock = Block(
-                    previousHash = "asdf",
-                    data = "test",
-                    timestamp = Instant.now().toEpochMilli(),
-                    height = 1u,
-                )
+                val badBlock = randomBlock("", 1u)
 
                 blockchain.processBlock(badBlock) shouldBe false
             }
@@ -57,5 +73,20 @@ class BlockchainTest : DescribeSpec({
             genesisBlock.data shouldBe "Genesis"
         }
     }
-
 })
+
+fun randomBlock(previousHash: String, height: UInt) = Block(
+    previousHash = previousHash,
+    data = "test",
+    timestamp = Instant.now().toEpochMilli(),
+    height = height,
+)
+
+fun randomArticle() = Article(
+    publisherId = "publisherId",
+    byline = "byline",
+    headline = "headline",
+    section = "section",
+    content = "content",
+    date = LocalDate.now().toString(),
+)
