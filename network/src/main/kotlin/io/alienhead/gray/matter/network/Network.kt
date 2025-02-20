@@ -8,6 +8,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class Node(
@@ -44,6 +45,7 @@ data class NodeInfo(
 
 @Serializable
 data class Network(
+    @Transient private val client: NetworkClient = NetworkWebClient(),
     private val peers: MutableList<Node>,
 ) {
     fun peers() = peers.toList()
@@ -75,11 +77,6 @@ data class Network(
 
         // Broadcast the addition of the node to the network
         if (broadcast == true && added) {
-            val client = HttpClient(CIO) {
-                install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-                    json()
-                }
-            }
 
             peers
                 .filter {
@@ -87,13 +84,28 @@ data class Network(
                 }
                 .forEach {
 //                    log.info("Broadcasting new peer to: ${it.address}")
-                    client.post("${it.address}/network/node?broadcast=true") {
-                        contentType(ContentType.Application.Json)
-                        setBody(node)
-                    }
+                    client.broadcastPeer(it.address, node)
                 }
 
-            client.close()
+        }
+    }
+}
+
+interface NetworkClient {
+    suspend fun broadcastPeer(address: String, node: Node)
+}
+
+class NetworkWebClient: NetworkClient {
+    private val client = HttpClient(CIO) {
+        install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+            json()
+        }
+    }
+
+    override suspend fun broadcastPeer(address: String, node: Node) {
+        client.post("${address}/network/node?broadcast=true") {
+            contentType(ContentType.Application.Json)
+            setBody(node)
         }
     }
 }

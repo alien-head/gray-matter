@@ -5,6 +5,7 @@ import io.alienhead.gray.matter.blockchain.Block
 import io.alienhead.gray.matter.blockchain.Blockchain
 import io.alienhead.gray.matter.network.Info
 import io.alienhead.gray.matter.network.Network
+import io.alienhead.gray.matter.network.NetworkWebClient
 import io.alienhead.gray.matter.network.Node
 import io.alienhead.gray.matter.network.NodeInfo
 import io.alienhead.gray.matter.network.NodeType
@@ -52,7 +53,7 @@ fun Application.module() {
 
     val blockchain = blockchainModule(donorNode == null)
 
-    val network = Network(mutableListOf())
+    val network = Network(NetworkWebClient(), mutableListOf())
 
     val nodeInfo = NodeInfo(
         address = selfAddress,
