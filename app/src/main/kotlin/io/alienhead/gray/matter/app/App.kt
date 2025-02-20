@@ -1,5 +1,10 @@
-package io.alienhead.gray.matter
+package io.alienhead.gray.matter.app
 
+import io.alienhead.gray.matter.network.Info
+import io.alienhead.gray.matter.network.Network
+import io.alienhead.gray.matter.network.Node
+import io.alienhead.gray.matter.network.NodeInfo
+import io.alienhead.gray.matter.network.NodeType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -123,38 +128,11 @@ fun Application.module() {
                  */
                 post {
 
-                    val broadcast = call.parameters["broadcast"]
+                    val broadcast = call.parameters["broadcast"]?.toBooleanStrictOrNull()
 
                     val node = call.receive<Node>()
 
-                    if (node.address.isBlank()) {
-                        call.respond(HttpStatusCode.BadRequest)
-                    }
-
-                    val added = network.addPeer(node)
-
-                    // Broadcast the addition of the node to the network
-                    if (broadcast?.toBooleanStrictOrNull() == true && added) {
-                        val client = HttpClient(CIO) {
-                            install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-                                json()
-                            }
-                        }
-
-                        network.peers()
-                            .filter {
-                                it.address != node.address
-                            }
-                            .forEach {
-                                log.info("Broadcasting new peer to: ${it.address}")
-                                client.post("${it.address}/network/node?broadcast=true") {
-                                    contentType(ContentType.Application.Json)
-                                    setBody(node)
-                                }
-                            }
-
-                        client.close()
-                    }
+                    network.addPeer(node, broadcast)
 
                     call.respond(HttpStatusCode.OK)
                 }

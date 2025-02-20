@@ -15,12 +15,15 @@ or run it directly from the terminal:
 * `PORT`: the given port for the app to run on. Defaults to 8081 if not provided.
 * `NODE_ADDRESS`: the url address (host, port, etc.) for accessing the node. Broadcast to the other nodes in the network. Required.
 * `NODE_DONOR`: the url address (host, port, etc.) for accessing another node to populate the blockchain and network pool. If not populated, the node will run in genesis mode. (See Network/Starting up for the first time)
+* `NODE_MODE`: the mode to run the node in: `AUTHOR` or `BASIC`. If `AUTHOR` is selected, `AUTHOR_PRIVATE_KEY` is required.
 
 ## Network
 ### Terminology
-* Node: a member of a network
+* Node: a member of a network.
 * Genesis node: the first member of the network. Creates the genesis block.
 * Donor node: a node that is used to get the blockchain and the list of nodes in the network.
+* Author node: a node in the network that has permission to mint blocks. 
+* Proof of Authority: the consensus mechanism for Gray. Only certain nodes can mint new blocks.
 
 ### Starting up for the first time
 The application should be provided with a donor node url address from an existing network.

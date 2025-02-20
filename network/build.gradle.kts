@@ -7,9 +7,6 @@ plugins {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
-    implementation("io.ktor:ktor-server-core")
-    implementation("io.ktor:ktor-server-netty")
-    implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
 
     implementation("io.ktor:ktor-client-core")
@@ -17,10 +14,4 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation")
 
     implementation("ch.qos.logback:logback-classic:1.5.16")
-
-    implementation(":network")
-}
-
-application {
-    mainClass.set("com.example.AppKt")
 }
