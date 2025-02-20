@@ -2,6 +2,7 @@ package io.alienhead.gray.matter.blockchain
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldBeEmpty
 import java.time.Instant
 
 class BlockchainTest : DescribeSpec({
@@ -44,6 +45,16 @@ class BlockchainTest : DescribeSpec({
 
                 blockchain.processBlock(badBlock) shouldBe false
             }
+        }
+    }
+
+    describe("genesisBlock") {
+        it("should have no previous hash and 0 height") {
+            val genesisBlock = Block.genesis()
+
+            genesisBlock.previousHash.shouldBeEmpty()
+            genesisBlock.height shouldBe 0u
+            genesisBlock.data shouldBe "Genesis"
         }
     }
 
