@@ -9,15 +9,7 @@ import io.alienhead.gray.matter.network.NetworkWebClient
 import io.alienhead.gray.matter.network.Node
 import io.alienhead.gray.matter.network.NodeInfo
 import io.alienhead.gray.matter.network.NodeType
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -31,7 +23,6 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import java.time.Instant
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -58,23 +49,37 @@ fun Application.module() {
         type = NodeType.valueOf(nodeMode)
     )
 
+    environment.log.info("Starting up node as ${nodeInfo.type}")
+
     // If a donor node has been specified,
     // get the blockchain, transactions, and network from it
     val blockchain = if (donorNode != null) {
+        environment.log.info("Donor node address found. Starting donor process.")
+
+        environment.log.info("Starting download of network peers from donor...")
         runBlocking { network.downloadPeers(donorNode) }
 
         // Also get the donor node's info
         runBlocking { network.downloadPeerInfo(donorNode) }
 
+        environment.log.info("Done downloading peers.")
+
+        environment.log.info("Downloading full blockchain...")
         val blockchain = runBlocking { network.downloadBlockchain(donorNode)}
 
+        environment.log.info("Full blockchain downloaded from donor.")
+
+        environment.log.info("Adding self to the network...")
         // Update the donor node with the new peer
         runBlocking { network.updatePeer(donorNode, nodeInfo.toNode())}
 
         blockchain
     } else {
+        environment.log.info("No donor node address found. Beginning genesis...")
          Blockchain(chain = mutableListOf(Block.genesis()))
     }
+
+    environment.log.info("Completed node startup.")
 
     routing {
         get("/") {
@@ -146,11 +151,17 @@ fun Application.module() {
         route("/article") {
             /**
              * Processes the article. If enough articles are processed, mint a new block.
-             * TODO notify the network of the new block.
-             * TODO only a node running in PUBLISHER mode should be able to accept an unprocessed article.
+             * TODO notify the network of the new article if a block was not minted.
+             * Only a node running in PUBLISHER mode should be able to accept an unprocessed article.
              * TODO only a PUBLISHER node that is the selected broadcaster should be able to broadcast the new block.
              */
             post {
+
+                if (nodeInfo.type == NodeType.REPLICA) {
+                    call.response.status(HttpStatusCode.Forbidden)
+                    return@post
+                }
+
                 val article = call.receive<Article>()
 
                 if (article.publisherId == ""
