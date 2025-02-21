@@ -61,67 +61,17 @@ fun Application.module() {
     // If a donor node has been specified,
     // get the blockchain, transactions, and network from it
     val blockchain = if (donorNode != null) {
-        val httpClient = HttpClient(CIO) {
-            install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-                json()
-            }
-        }
-
-        var response = runBlocking  { httpClient.get("$donorNode/network") }
-
-        if (response.status != HttpStatusCode.OK) {
-            throw RuntimeException("Failed to load from donor node with address: $donorNode")
-        }
-
-        val peers = runBlocking { response.body<Network>().peers().toMutableList() }
+        runBlocking { network.downloadPeers(donorNode) }
 
         // Also get the donor node's info
-        response = runBlocking { httpClient.get("$donorNode/info") }
-        if (response.status != HttpStatusCode.OK) {
-            throw RuntimeException("Failed to load from donor node with address: $donorNode")
-        }
+        runBlocking { network.downloadPeerInfo(donorNode) }
 
-        val donorNodeInfo = runBlocking { response.body<Info>() }
-
-        val peersAndDonor = peers + donorNodeInfo.node.toNode()
-
-        network.addPeers(peersAndDonor)
-
-        // Download the blockchain
-        var page = 0
-        val size = 10
-
-        response = runBlocking { httpClient.get("$donorNode/blockchain?page=0&size=$size") }
-        if (response.status != HttpStatusCode.OK) {
-            throw RuntimeException("Failed to download the blockchain from address: $donorNode")
-        }
-
-        var blocks = runBlocking { response.body<MutableList<Block>>() }
-        val totalChain = blocks
-
-        page++
-        while (blocks.isNotEmpty()) {
-            response = runBlocking { httpClient.get("$donorNode/blockchain?page=$page&size=$size") }
-            if (response.status != HttpStatusCode.OK) {
-                throw RuntimeException("Failed to download the blockchain from address: $donorNode")
-            }
-            blocks = runBlocking { response.body<MutableList<Block>>() }
-
-            totalChain.addAll(blocks)
-            page++
-        }
+        val blockchain = runBlocking { network.downloadBlockchain(donorNode)}
 
         // Update the donor node with the new peer
-        response = runBlocking { httpClient.post("$donorNode/network/node?broadcast=true") {
-            contentType(ContentType.Application.Json)
-            setBody(nodeInfo.toNode())
-        } }
-        if (response.status != HttpStatusCode.OK) {
-            // TODO since we have a list of nodes, go down the list and keep trying other nodes
-            throw RuntimeException("Failed to submit self to the network to address: $donorNode")
-        }
+        runBlocking { network.updatePeer(donorNode, nodeInfo.toNode())}
 
-        Blockchain(chain = totalChain)
+        blockchain
     } else {
          Blockchain(chain = mutableListOf(Block.genesis()))
     }
@@ -196,6 +146,7 @@ fun Application.module() {
         route("/article") {
             /**
              * Processes the article. If enough articles are processed, mint a new block.
+             * TODO notify the network of the new block.
              * TODO only a node running in PUBLISHER mode should be able to accept an unprocessed article.
              * TODO only a PUBLISHER node that is the selected broadcaster should be able to broadcast the new block.
              */
