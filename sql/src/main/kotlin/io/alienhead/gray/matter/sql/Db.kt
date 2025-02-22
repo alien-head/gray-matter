@@ -8,6 +8,7 @@ import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.dao.id.UIntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.selectAll
@@ -39,6 +40,42 @@ class Db(private val database: Database): Storage {
                 it[Blocks.createDate],
             )
         }
+    }
+
+    override fun latestBlock(): StoreBlock? = transaction(database) {
+       Blocks.selectAll()
+           .orderBy(Blocks.height to SortOrder.DESC)
+           .singleOrNull()?.let {
+               StoreBlock(
+                   it[Blocks.hash],
+                   it[Blocks.previousHash],
+                   it[Blocks.data],
+                   it[Blocks.timestamp],
+                   it[Blocks.height],
+                   it[Blocks.createDate],
+               )
+           }
+    }
+
+    override fun chainSize(): Long = transaction(database) {
+        Blocks.selectAll().count()
+    }
+
+    override fun blocks(page: Int, size: Int): List<StoreBlock> = transaction(database) {
+        Blocks.selectAll()
+            .orderBy(Blocks.height to SortOrder.ASC)
+            .limit(size)
+            .offset((page * size).toLong())
+            .map {
+                StoreBlock(
+                    it[Blocks.hash],
+                    it[Blocks.previousHash],
+                    it[Blocks.data],
+                    it[Blocks.timestamp],
+                    it[Blocks.height],
+                    it[Blocks.createDate],
+                )
+            }
     }
 
     companion object {

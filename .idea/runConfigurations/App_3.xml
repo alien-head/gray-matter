@@ -1,10 +1,13 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="App 3" type="KtorApplicationConfigurationType" factoryName="Ktor">
     <envs>
+      <env name="DB_PASS" value="password" />
+      <env name="DB_URL" value="jdbc:postgresql://localhost:5434/postgres" />
+      <env name="DB_USER" value="postgres" />
       <env name="NODE_ADDRESS" value="http://localhost:8083" />
+      <env name="NODE_DONOR" value="http://localhost:8081" />
       <env name="NODE_MODE" value="REPLICA" />
       <env name="PORT" value="8083" />
-      <env name="NODE_DONOR" value="http://localhost:8081" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="io.alienhead.gray.matter.app.AppKt" />
     <module name="gray-matter.app.main" />
