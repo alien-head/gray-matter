@@ -55,6 +55,12 @@ or run it directly from the terminal:
 * Run `./gradlew check` to run all checks, including tests.
 * Run `./gradlew clean` to clean all build outputs.
 
+#### Dependencies
+Dependency versions are centralized in `gradle.properties`. 
+New dependencies should be added to this list in alphabetical order.
+
+Gray-matter requires an installation of Java 21. The Temurin SDK is recommended.
+
 ### Running locally
 Three nodes are configured to run locally if you use IntelliJ. 
 The run configurations should be automatically added to your IDE.
