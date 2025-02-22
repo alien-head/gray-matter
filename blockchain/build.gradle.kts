@@ -4,14 +4,19 @@ plugins {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    val kotlinxSerialization: String by project
+    val kotest: String by project
+    val logback: String by project
+    val mockk: String by project
 
-    implementation("ch.qos.logback:logback-classic:1.5.16")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerialization")
+
+    implementation("ch.qos.logback:logback-classic:$logback")
 
     implementation(project(":crypto"))
     implementation(project(":storage"))
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotest")
+    testImplementation("io.kotest:kotest-assertions-core:$kotest")
+    testImplementation("io.mockk:mockk:$mockk")
 }

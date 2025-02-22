@@ -5,7 +5,11 @@ plugins {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    val kotlinxSerialization: String by project
+    val postgresql: String by project
+    val logback: String by project
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerialization")
 
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
@@ -16,9 +20,9 @@ dependencies {
     implementation("io.ktor:ktor-client-cio")
     implementation("io.ktor:ktor-client-content-negotiation")
 
-    implementation("org.postgresql:postgresql:42.7.5")
+    implementation("org.postgresql:postgresql:$postgresql")
 
-    implementation("ch.qos.logback:logback-classic:1.5.16")
+    implementation("ch.qos.logback:logback-classic:$logback")
 
     implementation(project(":network"))
     implementation(project(":blockchain"))
@@ -27,5 +31,5 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.example.AppKt")
+    mainClass.set("io.alienhead.gray.matter.app.AppKt")
 }
