@@ -18,6 +18,10 @@ data class Blockchain(
 ) {
     val unprocessedCount get() = unprocessedArticles.size
 
+    fun getBlock(hash: String): Block? {
+        return storage.getBlock(hash)?.toBlock()
+    }
+
     /**
      * Returns a set of blocks from the blockchain by page number and size.
      * If size is null, use the default of 10.

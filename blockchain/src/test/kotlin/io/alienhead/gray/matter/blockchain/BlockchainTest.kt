@@ -17,6 +17,18 @@ import java.time.LocalDate
 
 class BlockchainTest : DescribeSpec({
     describe("Blockchain") {
+        describe("getBlock") {
+            it("should return a Block if found") {
+                val storage = mockk<Storage>()
+                val blockchain = Blockchain(storage)
+
+                val randomBlock = randomBlock("", 1u)
+                every { storage.getBlock(any()) } returns randomBlock.toStore()
+
+                blockchain.getBlock(randomBlock.hash) shouldBe randomBlock
+            }
+        }
+
         describe("chain") {
             it("should return a list of 10 blocks") {
                 val storage = mockk<Storage>()
