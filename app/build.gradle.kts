@@ -16,10 +16,14 @@ dependencies {
     implementation("io.ktor:ktor-client-cio")
     implementation("io.ktor:ktor-client-content-negotiation")
 
+    implementation("org.postgresql:postgresql:42.7.5")
+
     implementation("ch.qos.logback:logback-classic:1.5.16")
 
     implementation(project(":network"))
     implementation(project(":blockchain"))
+    implementation(project(":storage"))
+    implementation(project(":sql"))
 }
 
 application {

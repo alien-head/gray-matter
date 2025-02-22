@@ -9,9 +9,11 @@ Gray Matter is a blockchain and network used to secure news articles from edits,
 ### Repository
 The repository is split into several packages:
 * app: the main logic for starting the application, serving the JSON API, etc.
-* blockchain: everything to do with just the blockchain
-* crypto: cryptography utilities
-* network: everything to do with the networking layer and nodes
+* blockchain: everything to do with just the blockchain.
+* crypto: cryptography utilities.
+* network: everything to do with the networking layer and nodes.
+* storage: the interface/API for working with the storage layer.
+* db: an implementation of the `storage` API for a PostgreSQL database.
 
 This project uses [Gradle](https://gradle.org/).
 To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,

@@ -124,7 +124,7 @@ interface NetworkClient {
     suspend fun broadcastBlock(address: String, block: Block)
     suspend fun downloadPeers(address: String): List<Node>
     suspend fun downloadPeerInfo(address: String): Info
-    suspend fun downloadBlockchain(address: String): Blockchain
+    suspend fun downloadBlockchain(address: String): List<Block>
     suspend fun updatePeer(address: String, node: Node)
 }
 
@@ -168,7 +168,7 @@ class NetworkWebClient: NetworkClient {
         return response.body<Info>()
     }
 
-    override suspend fun downloadBlockchain(address: String): Blockchain {
+    override suspend fun downloadBlockchain(address: String): List<Block> {
         // Download the blockchain
         var page = 0
 
@@ -181,7 +181,7 @@ class NetworkWebClient: NetworkClient {
             blocks.addAll(newBlocks)
         }
 
-        return Blockchain(chain = blocks.toMutableList())
+        return blocks
     }
 
     override suspend fun updatePeer(address: String, node: Node) {

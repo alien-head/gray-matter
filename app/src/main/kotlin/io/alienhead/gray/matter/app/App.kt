@@ -3,6 +3,7 @@ package io.alienhead.gray.matter.app
 import io.alienhead.gray.matter.blockchain.Article
 import io.alienhead.gray.matter.blockchain.Block
 import io.alienhead.gray.matter.blockchain.Blockchain
+import io.alienhead.gray.matter.sql.Db
 import io.alienhead.gray.matter.network.Info
 import io.alienhead.gray.matter.network.Network
 import io.alienhead.gray.matter.network.NetworkWebClient
@@ -53,7 +54,7 @@ fun Application.module() {
 
     // If a donor node has been specified,
     // get the blockchain, transactions, and network from it
-    val blockchain = if (donorNode != null) {
+    val blocks = if (donorNode != null) {
         environment.log.info("Donor node address found. Starting donor process.")
 
         environment.log.info("Starting download of network peers from donor...")
@@ -65,7 +66,7 @@ fun Application.module() {
         environment.log.info("Done downloading peers.")
 
         environment.log.info("Downloading full blockchain...")
-        val blockchain = runBlocking { network.downloadBlockchain(donorNode)}
+        val blocks = runBlocking { network.downloadBlockchain(donorNode) }
 
         environment.log.info("Full blockchain downloaded from donor.")
 
@@ -73,11 +74,13 @@ fun Application.module() {
         // Update the donor node with the new peer
         runBlocking { network.updatePeer(donorNode, nodeInfo.toNode())}
 
-        blockchain
+        blocks.toMutableList()
     } else {
         environment.log.info("No donor node address found. Beginning genesis...")
-         Blockchain(chain = mutableListOf(Block.genesis()))
+         mutableListOf(Block.genesis())
     }
+
+    val blockchain = Blockchain(storage(), blocks)
 
     environment.log.info("Completed node startup.")
 
@@ -190,4 +193,12 @@ fun Application.module() {
             }
         }
     }
+}
+
+fun Application.storage(): Db {
+    val url = environment.config.property("ktor.db.url").getString()
+    val username = environment.config.property("ktor.db.user").getString()
+    val password = environment.config.property("ktor.db.pass").getString()
+
+    return Db.init(url, username, password)
 }

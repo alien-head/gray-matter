@@ -1,6 +1,7 @@
 package io.alienhead.gray.matter.blockchain
 
 import io.alienhead.gray.matter.crypto.hash
+import io.alienhead.gray.matter.storage.Storage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
@@ -8,8 +9,8 @@ import java.time.Instant
 /**
  * The chain must be initialized with a genesis block.
  */
-@Serializable
 data class Blockchain(
+    val storage: Storage,
     val chain: MutableList<Block>,
     private val unprocessedArticles: MutableList<Article> = mutableListOf(),
 ) {
