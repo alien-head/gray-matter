@@ -1,5 +1,7 @@
 # gray-matter
 
+![example workflow](https://github.com/alien-head/gray-matter/actions/workflows/blank.yml/badge.svg)
+
 Gray Matter is a blockchain and network used to secure news articles from edits, tampering, and censorship.
 
 # Docs
