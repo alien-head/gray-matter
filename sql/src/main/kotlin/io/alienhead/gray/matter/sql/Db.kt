@@ -61,9 +61,11 @@ class Db(private val database: Database): Storage {
         Blocks.selectAll().count()
     }
 
-    override fun blocks(page: Int, size: Int): List<StoreBlock> = transaction(database) {
+    override fun blocks(page: Int, size: Int, sort: String?): List<StoreBlock> = transaction(database) {
+        val sortOrder = if (sort == null) SortOrder.ASC else SortOrder.valueOf(sort)
+
         Blocks.selectAll()
-            .orderBy(Blocks.height to SortOrder.ASC)
+            .orderBy(Blocks.height to sortOrder)
             .limit(size)
             .offset((page * size).toLong())
             .map {
