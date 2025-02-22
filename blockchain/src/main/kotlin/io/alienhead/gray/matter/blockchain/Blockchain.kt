@@ -82,13 +82,13 @@ data class Blockchain(
 }
 
 @Serializable
-data class Block @OptIn(ExperimentalSerializationApi::class) constructor(
+data class Block(
     val previousHash: String,
     // Data represents articles that have been minted into a json string
     val data: String,
     val timestamp: Long,
     val height: UInt,
-    @EncodeDefault val hash: String = hash(previousHash + timestamp + data),
+    @OptIn(ExperimentalSerializationApi::class) @EncodeDefault val hash: String = hash(previousHash + timestamp + data),
 ) {
     companion object {
         fun genesis(): Block {
