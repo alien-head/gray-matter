@@ -70,10 +70,10 @@ data class Network(
         return true
     }
 
-    fun addPeers(peers: List<Node>) {
-        peers.forEach { addPeer(it) }
-    }
-
+    /**
+     * Adds a node to the network. Returns true if successfully added.
+     * If the node already exists do not add it and return false.
+     */
     suspend fun addPeer(node: Node, broadcast: Boolean?) {
         if (node.address.isBlank()) {
             throw RuntimeException("Address cannot be empty")
@@ -83,7 +83,6 @@ data class Network(
 
         // Broadcast the addition of the node to the network
         if (broadcast == true && added) {
-
             peers
                 .filter {
                     it.address != node.address
@@ -91,6 +90,8 @@ data class Network(
                 .forEach {
 //                    log.info("Broadcasting new peer to: ${it.address}")
                     client.broadcastPeer(it.address, node)
+
+                    // TODO track if the peer was unsuccessfully broadcast
                 }
         }
     }
@@ -165,7 +166,6 @@ class NetworkWebClient: NetworkClient {
         }
 
         return response.body<Info>()
-
     }
 
     override suspend fun downloadBlockchain(address: String): Blockchain {
@@ -195,6 +195,7 @@ class NetworkWebClient: NetworkClient {
         }
     }
 
+    // TODO since we have a list of nodes, we should be able to pick back up from another node if this donor goes down
     private suspend fun downloadBlockchain(address: String, page: Int): List<Block> {
         val response = client.get("$address/blockchain?page=$page&size=10")
         if (response.status != HttpStatusCode.OK) {
