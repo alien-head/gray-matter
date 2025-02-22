@@ -130,13 +130,14 @@ fun Application.module() {
             get {
                 val page = call.parameters["page"]?.toIntOrNull()
                 val size = call.parameters["size"]?.toIntOrNull()
+                val sort = call.parameters["sort"]
 
                 if (page == null || page < 0 || (size != null && size < 1)) {
                     call.response.status(HttpStatusCode.BadRequest)
                     return@get
                 }
 
-                val subchain = blockchain.chain(page, size)
+                val subchain = blockchain.chain(page, size, sort)
 
                 call.respond(HttpStatusCode.OK, subchain)
             }

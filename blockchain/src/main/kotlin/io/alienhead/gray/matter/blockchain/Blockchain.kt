@@ -3,6 +3,8 @@ package io.alienhead.gray.matter.blockchain
 import io.alienhead.gray.matter.crypto.hash
 import io.alienhead.gray.matter.storage.Storage
 import io.alienhead.gray.matter.storage.StoreBlock
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
@@ -20,12 +22,12 @@ data class Blockchain(
      * Returns a set of blocks from the blockchain by page number and size.
      * If size is null, use the default of 10.
      */
-    fun chain(page: Int, size: Int?): List<Block> {
+    fun chain(page: Int, size: Int?, sort: String?): List<Block> {
 
         return if (page < 0) {
             emptyList()
         } else {
-            storage.blocks(page, size ?: 10).toBlocks()
+            storage.blocks(page, size ?: 10, sort).toBlocks()
         }
     }
 
@@ -80,13 +82,13 @@ data class Blockchain(
 }
 
 @Serializable
-data class Block(
+data class Block @OptIn(ExperimentalSerializationApi::class) constructor(
     val previousHash: String,
     // Data represents articles that have been minted into a json string
     val data: String,
     val timestamp: Long,
     val height: UInt,
-    val hash: String = hash(previousHash + timestamp + data)
+    @EncodeDefault val hash: String = hash(previousHash + timestamp + data),
 ) {
     companion object {
         fun genesis(): Block {
@@ -125,5 +127,5 @@ data class Article(
 }
 
 fun Block.toStore() = StoreBlock(hash, previousHash, data, timestamp, height)
-fun StoreBlock.toBlock() = Block(previousHash, data, timestamp, height)
+fun StoreBlock.toBlock() = Block(previousHash, data, timestamp, height, hash)
 fun List<StoreBlock>.toBlocks() = map { it.toBlock() }
