@@ -1,6 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="App 2" type="KtorApplicationConfigurationType" factoryName="Ktor">
     <envs>
+      <env name="DB_PASS" value="password" />
+      <env name="DB_URL" value="jdbc:postgresql://localhost:5433/postgres" />
+      <env name="DB_USER" value="postgres" />
       <env name="NODE_ADDRESS" value="http://localhost:8082" />
       <env name="NODE_DONOR" value="http://localhost:8081" />
       <env name="NODE_MODE" value="REPLICA" />

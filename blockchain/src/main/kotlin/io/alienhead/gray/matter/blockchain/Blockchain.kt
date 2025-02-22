@@ -2,6 +2,7 @@ package io.alienhead.gray.matter.blockchain
 
 import io.alienhead.gray.matter.crypto.hash
 import io.alienhead.gray.matter.storage.Storage
+import io.alienhead.gray.matter.storage.StoreBlock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
@@ -11,7 +12,6 @@ import java.time.Instant
  */
 data class Blockchain(
     val storage: Storage,
-    val chain: MutableList<Block>,
     private val unprocessedArticles: MutableList<Article> = mutableListOf(),
 ) {
     val unprocessedCount get() = unprocessedArticles.size
@@ -21,28 +21,12 @@ data class Blockchain(
      * If size is null, use the default of 10.
      */
     fun chain(page: Int, size: Int?): List<Block> {
-        val chunked = this.chain.chunked(size ?: 10)
 
-        return if (page > chunked.size - 1) {
+        return if (page < 0) {
             emptyList()
         } else {
-            chunked[page]
+            storage.blocks(page, size ?: 10).toBlocks()
         }
-    }
-
-    fun isValid(): Boolean {
-        if (chain.size < 2) return true
-
-        for (i in 1..chain.size) {
-            val currentBlock = chain[i]
-            val previousBlock = chain[i-1]
-
-            if (previousBlock.hash != currentBlock.previousHash) {
-                return false
-            }
-        }
-
-        return true
     }
 
     fun processArticle(article: Article): Block? {
@@ -55,8 +39,8 @@ data class Blockchain(
         if (unprocessedArticles.size >= 10) {
             val data = Json.encodeToString(unprocessedArticles)
             val timestamp = Instant.now().toEpochMilli()
-            val latestBlock = chain.last()
-            val previousHash = latestBlock.hash
+            val latestBlock = storage.latestBlock()
+            val previousHash = latestBlock!!.hash
 
             val newBlock = Block(
                 previousHash,
@@ -64,7 +48,8 @@ data class Blockchain(
                 timestamp,
                 latestBlock.height + 1u
             )
-            chain.add(newBlock)
+
+            storage.storeBlock(newBlock.toStore())
 
             unprocessedArticles.clear()
 
@@ -79,15 +64,17 @@ data class Blockchain(
      * If it fails to verify, do not add it to the chain.
      */
     fun processBlock(block: Block): Boolean {
-        val latestBlock = chain.last()
+        val latestBlock = storage.latestBlock()
 
-        if (block.height <= chain.size.toUInt() - 1u) return false
+        if (latestBlock != null) {
+            if (block.height <= storage.chainSize().toUInt() - 1u) return false
 
-        if (block.previousHash != latestBlock.hash) return false
+            if (block.previousHash != latestBlock.hash) return false
 
-        if (block.timestamp <= latestBlock.timestamp) return false
+            if (block.timestamp <= latestBlock.timestamp) return false
+        }
 
-        chain.add(block)
+        storage.storeBlock(block.toStore())
         return true
     }
 }
@@ -99,9 +86,8 @@ data class Block(
     val data: String,
     val timestamp: Long,
     val height: UInt,
+    val hash: String = hash(previousHash + timestamp + data)
 ) {
-    val hash = hash(previousHash + timestamp + data)
-
     companion object {
         fun genesis(): Block {
             return Block(
@@ -137,3 +123,7 @@ data class Article(
 ) {
     val id = hash(publisherId + byline + headline + section + content + date)
 }
+
+fun Block.toStore() = StoreBlock(hash, previousHash, data, timestamp, height)
+fun StoreBlock.toBlock() = Block(previousHash, data, timestamp, height)
+fun List<StoreBlock>.toBlocks() = map { it.toBlock() }

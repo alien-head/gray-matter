@@ -5,6 +5,9 @@ import java.time.Instant
 interface Storage {
     fun storeBlock(block: StoreBlock)
     fun getBlock(hash: String): StoreBlock?
+    fun latestBlock(): StoreBlock?
+    fun chainSize(): Long
+    fun blocks(page: Int, size: Int): List<StoreBlock>
 }
 
 data class StoreBlock(

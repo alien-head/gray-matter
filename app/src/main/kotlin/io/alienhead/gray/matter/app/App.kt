@@ -52,9 +52,10 @@ fun Application.module() {
 
     environment.log.info("Starting up node as ${nodeInfo.type}")
 
+    val blockchain = Blockchain(storage())
     // If a donor node has been specified,
     // get the blockchain, transactions, and network from it
-    val blocks = if (donorNode != null) {
+    if (donorNode != null) {
         environment.log.info("Donor node address found. Starting donor process.")
 
         environment.log.info("Starting download of network peers from donor...")
@@ -74,13 +75,11 @@ fun Application.module() {
         // Update the donor node with the new peer
         runBlocking { network.updatePeer(donorNode, nodeInfo.toNode())}
 
-        blocks.toMutableList()
+        blocks.forEach { blockchain.processBlock(it)}
     } else {
         environment.log.info("No donor node address found. Beginning genesis...")
-         mutableListOf(Block.genesis())
+        blockchain.processBlock(Block.genesis())
     }
-
-    val blockchain = Blockchain(storage(), blocks)
 
     environment.log.info("Completed node startup.")
 

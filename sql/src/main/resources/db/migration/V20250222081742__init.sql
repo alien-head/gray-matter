@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS block (
     data VARCHAR(3000) NOT NULL,
     timestamp BIGINT NOT NULL,
     height BIGINT NOT NULL,
-    createDate TIMESTAMP NOT NULL
+    create_date TIMESTAMP NOT NULL
 );
