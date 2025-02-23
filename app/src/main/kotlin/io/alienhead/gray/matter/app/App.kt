@@ -15,6 +15,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -22,6 +23,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.swagger.codegen.languages.StaticDocCodegen
+import io.swagger.codegen.languages.SwaggerGenerator
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -88,7 +91,9 @@ fun Application.module() {
             call.respondText("Hello World!")
         }
 
-        get("/info") {
+        openAPI(path="api", swaggerFile = "openapi/documentation.yml")
+
+        get("/status") {
             call.respond(Info(nodeInfo))
         }
 
@@ -117,7 +122,7 @@ fun Application.module() {
 
                     network.addPeer(node, broadcast)
 
-                    call.respond(HttpStatusCode.OK)
+                    call.respond(HttpStatusCode.Created)
                 }
             }
         }
@@ -146,7 +151,30 @@ fun Application.module() {
                 post {
                     val newBlock = call.receive<Block>()
 
-                    blockchain.processBlock(newBlock)
+                    val processed = blockchain.processBlock(newBlock)
+
+                    if (processed) {
+                        call.respond(HttpStatusCode.Created)
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest)
+                    }
+                }
+
+                get("/{hash}") {
+                    val hash = call.parameters["hash"]
+
+                    if (hash.isNullOrBlank()) {
+                        call.respond(HttpStatusCode.BadRequest)
+                        return@get
+                    }
+
+                    val block = blockchain.getBlock(hash)
+
+                    if (block == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        call.respond(HttpStatusCode.OK, block)
+                    }
                 }
             }
         }

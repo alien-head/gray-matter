@@ -55,6 +55,10 @@ or run it directly from the terminal:
 * Run `./gradlew check` to run all checks, including tests.
 * Run `./gradlew clean` to clean all build outputs.
 
+### REST API Endpoints
+Gray Matter is a design-first REST API. 
+When making changes to the REST API, make sure changes are also made to /app/src/main/resources/openapi/documentation.yml.
+
 #### Dependencies
 Dependency versions are centralized in `gradle.properties`. 
 New dependencies should be added to this list in alphabetical order.
