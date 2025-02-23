@@ -45,7 +45,7 @@ class Db(private val database: Database): Storage {
     override fun latestBlock(): StoreBlock? = transaction(database) {
        Blocks.selectAll()
            .orderBy(Blocks.height to SortOrder.DESC)
-           .singleOrNull()?.let {
+           .firstOrNull()?.let {
                StoreBlock(
                    it[Blocks.hash],
                    it[Blocks.previousHash],
