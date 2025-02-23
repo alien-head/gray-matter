@@ -1,8 +1,10 @@
 package io.alienhead.gray.matter.crypto
 
+import kotlinx.serialization.Serializable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.io.UnsupportedEncodingException
 import java.security.Key
+import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -12,7 +14,11 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.Signature
 import java.security.spec.ECGenParameterSpec
+import java.security.spec.EncodedKeySpec
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.util.*
+
 
 fun setupSecurity() {
     Security.addProvider(BouncyCastleProvider())
@@ -77,6 +83,35 @@ fun verifySignature(publicKey: PublicKey?, data: String, signature: ByteArray?):
     }
 }
 
-fun Key.getString(key: Key): String {
-    return Base64.getEncoder().encodeToString(key.encoded)
+fun Key.getString(): String {
+    return Base64.getEncoder().encodeToString(this.encoded)
 }
+
+fun ByteArray.toHexString(): String {
+    return Base64.getEncoder().encodeToString(this)
+}
+
+fun String.hexStringToByteArray(): ByteArray {
+    return Base64.getDecoder().decode(this)
+}
+
+fun String.toPublicKey(): PublicKey {
+    val publicKeySpec: EncodedKeySpec = X509EncodedKeySpec(this.hexStringToByteArray())
+    val kf: KeyFactory = KeyFactory.getInstance("EC")
+    return kf.generatePublic(publicKeySpec)
+}
+
+fun String.toPrivateKey(): PrivateKey {
+    val privateKeySpec: EncodedKeySpec = PKCS8EncodedKeySpec(this.hexStringToByteArray())
+    val kf: KeyFactory = KeyFactory.getInstance("EC")
+    return kf.generatePrivate(privateKeySpec)
+}
+
+@Serializable
+data class KeyPairString(val privateKey: String, val publicKey: String)
+
+@Serializable
+data class SigningPayload(val privateKey: String, val data: String)
+
+@Serializable
+data class Signature(val signature: String)

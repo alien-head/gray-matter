@@ -18,4 +18,16 @@ class CryptoTest: DescribeSpec({
             verifySignature(keyPair.second, "test", signature) shouldBe true
         }
     }
+
+    describe("toString") {
+        it("should convert ByteArray to String and back") {
+            val keyPair = generateKeyPair().shouldNotBeNull()
+
+            val signature = sign(keyPair.first, "test")
+
+            val signatureString = signature.toHexString()
+
+            signature shouldBe signatureString.hexStringToByteArray()
+        }
+    }
 })

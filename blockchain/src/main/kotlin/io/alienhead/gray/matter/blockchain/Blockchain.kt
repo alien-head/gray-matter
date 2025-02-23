@@ -1,6 +1,9 @@
 package io.alienhead.gray.matter.blockchain
 
 import io.alienhead.gray.matter.crypto.hash
+import io.alienhead.gray.matter.crypto.hexStringToByteArray
+import io.alienhead.gray.matter.crypto.toPublicKey
+import io.alienhead.gray.matter.crypto.verifySignature
 import io.alienhead.gray.matter.storage.Storage
 import io.alienhead.gray.matter.storage.StoreBlock
 import kotlinx.serialization.EncodeDefault
@@ -35,34 +38,44 @@ data class Blockchain(
         }
     }
 
-    fun processArticle(article: Article): Block? {
-        unprocessedArticles.add(article)
+    fun processArticle(article: Article): ProcessedArticle {
+        // First verify the Article's signature
+        val verified = verifySignature(
+            article.publisherKey.toPublicKey(),
+            article.byline + article.headline + article.section + article.content + article.date,
+            article.signature.hexStringToByteArray()
+        )
 
-        /*
+        if (verified) {
+            unprocessedArticles.add(article)
+
+            /*
          * if the unprocessed article count is 10 or greater,
          * mint the articles into a Block and add it to the chain.
          */
-        if (unprocessedArticles.size >= 10) {
-            val data = Json.encodeToString(unprocessedArticles)
-            val timestamp = Instant.now().toEpochMilli()
-            val latestBlock = storage.latestBlock()
-            val previousHash = latestBlock!!.hash
+            if (unprocessedArticles.size >= 10) {
+                val data = Json.encodeToString(unprocessedArticles)
+                val timestamp = Instant.now().toEpochMilli()
+                val latestBlock = storage.latestBlock()
+                val previousHash = latestBlock!!.hash
 
-            val newBlock = Block(
-                previousHash,
-                data,
-                timestamp,
-                latestBlock.height + 1u
-            )
+                val newBlock = Block(
+                    previousHash,
+                    data,
+                    timestamp,
+                    latestBlock.height + 1u
+                )
 
-            storage.storeBlock(newBlock.toStore())
+                storage.storeBlock(newBlock.toStore())
 
-            unprocessedArticles.clear()
+                unprocessedArticles.clear()
 
-            return newBlock
+                return ProcessedArticle(true, newBlock)
+            }
+            return ProcessedArticle(true, null)
         }
 
-        return null
+        return ProcessedArticle(false, null)
     }
 
     /**
@@ -111,7 +124,7 @@ data class Article(
     /**
      * The public key corresponding to the publisher of the article
      */
-    val publisherId: String,
+    val publisherKey: String,
     val byline: String,
     val headline: String,
     /**
@@ -126,9 +139,18 @@ data class Article(
      * The date in format YYYY-MM-dd
      */
     val date: String,
+    /**
+     * The ECDSA signature of the Article (byline + headline + section + content + date)
+     */
+    val signature: String,
 ) {
-    val id = hash(publisherId + byline + headline + section + content + date)
+    val id = hash(publisherKey + byline + headline + section + content + date)
 }
+
+data class ProcessedArticle(
+    val processed: Boolean,
+    val block: Block?,
+)
 
 fun Block.toStore() = StoreBlock(hash, previousHash, data, timestamp, height)
 fun StoreBlock.toBlock() = Block(previousHash, data, timestamp, height, hash)
