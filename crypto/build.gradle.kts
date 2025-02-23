@@ -4,12 +4,14 @@ plugins {
 }
 
 dependencies {
+    val bouncyCastle: String by project
     val kotlinxSerialization: String by project
     val kotest: String by project
     val logback: String by project
     val mockk: String by project
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerialization")
+    implementation("org.bouncycastle:bcprov-jdk18on:$bouncyCastle")
 
     implementation("ch.qos.logback:logback-classic:$logback")
 

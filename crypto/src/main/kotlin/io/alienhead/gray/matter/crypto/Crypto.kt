@@ -1,8 +1,22 @@
 package io.alienhead.gray.matter.crypto
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.io.UnsupportedEncodingException
+import java.security.Key
+import java.security.KeyPairGenerator
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.SecureRandom
+import java.security.Security
+import java.security.Signature
+import java.security.spec.ECGenParameterSpec
+import java.util.*
+
+fun setupSecurity() {
+    Security.addProvider(BouncyCastleProvider())
+}
 
 fun hash(data: String) = try {
     val digest = MessageDigest.getInstance("SHA-256")
@@ -13,4 +27,56 @@ fun hash(data: String) = try {
     ""
 } catch( e: UnsupportedEncodingException) {
     ""
+}
+
+fun generateKeyPair(): Pair<PrivateKey, PublicKey>? {
+    return try {
+        val keyGen = KeyPairGenerator.getInstance("ECDSA", "BC")
+        val random: SecureRandom = SecureRandom.getInstance("SHA1PRNG")
+        val ecSpec = ECGenParameterSpec("prime192v1")
+        // Initialize the key generator and generate a KeyPair
+        keyGen.initialize(ecSpec, random) //256 bytes provides an acceptable security level
+        val keyPair = keyGen.generateKeyPair()
+        // Set the public and private keys from the keyPair
+        Pair(keyPair.private, keyPair.public)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+/**
+ * Applies an ECDSA signature to the input.
+ */
+fun sign(privateKey: PrivateKey, input: String): ByteArray {
+    val dsa: Signature
+    val output: ByteArray
+    try {
+        dsa = Signature.getInstance("ECDSA", "BC")
+        dsa.initSign(privateKey)
+        val strByte = input.toByteArray()
+        dsa.update(strByte)
+        val realSig: ByteArray = dsa.sign()
+        output = realSig
+    } catch (e: java.lang.Exception) {
+        throw RuntimeException(e)
+    }
+    return output
+}
+
+/**
+ * Verifies an ECDSA signature
+ */
+fun verifySignature(publicKey: PublicKey?, data: String, signature: ByteArray?): Boolean {
+    try {
+        val ecdsaVerify: Signature = Signature.getInstance("ECDSA", "BC")
+        ecdsaVerify.initVerify(publicKey)
+        ecdsaVerify.update(data.toByteArray())
+        return ecdsaVerify.verify(signature)
+    } catch (e: java.lang.Exception) {
+        throw RuntimeException(e)
+    }
+}
+
+fun Key.getString(key: Key): String {
+    return Base64.getEncoder().encodeToString(key.encoded)
 }
