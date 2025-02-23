@@ -79,7 +79,7 @@ Examples of environment variable usage can be found in /idea/runConfigurations.
 * `DB_PASS`: the password for the database user.
 * `NODE_ADDRESS`: the url address (host, port, etc.) for accessing the node. Broadcast to the other nodes in the network. Required. This should be a static IP address or url.
 * `NODE_DONOR`: the url address (host, port, etc.) for accessing another node to populate the blockchain and network pool. If not populated, the node will run in genesis mode. (See Network/Starting up for the first time)
-* `NODE_MODE`: the mode to run the node in: `PUBLISHER` or `REPLICA`.
+* `NODE_MODE`: the mode to run the node in:
   * `PUBLISHER`: a node that has the ability to publish transactions (articles), mint blocks, and broadcast new blocks to the network.
   * `REPLICA`: a node that is a full replica of the network and blockchain. Receives updates from publisher nodes.
   * `UTILITY`: a node that is running without a blockchain, network, or database. Useful for generating key-pairs and working with Gray Matter's local utilities. Most REST API endpoints are disabled in this mode. Database connection information is not required in this mode.
