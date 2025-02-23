@@ -46,36 +46,34 @@ data class Blockchain(
             article.signature.hexStringToByteArray()
         )
 
-        if (verified) {
-            unprocessedArticles.add(article)
+        if (!verified) return ProcessedArticle(false, null)
 
-            /*
+        unprocessedArticles.add(article)
+
+        /*
          * if the unprocessed article count is 10 or greater,
          * mint the articles into a Block and add it to the chain.
          */
-            if (unprocessedArticles.size >= 10) {
-                val data = Json.encodeToString(unprocessedArticles)
-                val timestamp = Instant.now().toEpochMilli()
-                val latestBlock = storage.latestBlock()
-                val previousHash = latestBlock!!.hash
+        if (unprocessedArticles.size >= 10) {
+            val data = Json.encodeToString(unprocessedArticles)
+            val timestamp = Instant.now().toEpochMilli()
+            val latestBlock = storage.latestBlock()
+            val previousHash = latestBlock!!.hash
 
-                val newBlock = Block(
-                    previousHash,
-                    data,
-                    timestamp,
-                    latestBlock.height + 1u
-                )
+            val newBlock = Block(
+                previousHash,
+                data,
+                timestamp,
+                latestBlock.height + 1u
+            )
 
-                storage.storeBlock(newBlock.toStore())
+            storage.storeBlock(newBlock.toStore())
 
-                unprocessedArticles.clear()
+            unprocessedArticles.clear()
 
-                return ProcessedArticle(true, newBlock)
-            }
-            return ProcessedArticle(true, null)
+            return ProcessedArticle(true, newBlock)
         }
-
-        return ProcessedArticle(false, null)
+        return ProcessedArticle(true, null)
     }
 
     /**
