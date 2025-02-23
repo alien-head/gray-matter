@@ -3,6 +3,15 @@ package io.alienhead.gray.matter.app
 import io.alienhead.gray.matter.blockchain.Article
 import io.alienhead.gray.matter.blockchain.Block
 import io.alienhead.gray.matter.blockchain.Blockchain
+import io.alienhead.gray.matter.crypto.KeyPairString
+import io.alienhead.gray.matter.crypto.Signature
+import io.alienhead.gray.matter.crypto.SigningPayload
+import io.alienhead.gray.matter.crypto.generateKeyPair
+import io.alienhead.gray.matter.crypto.getString
+import io.alienhead.gray.matter.crypto.setupSecurity
+import io.alienhead.gray.matter.crypto.sign
+import io.alienhead.gray.matter.crypto.toHexString
+import io.alienhead.gray.matter.crypto.toPrivateKey
 import io.alienhead.gray.matter.sql.Db
 import io.alienhead.gray.matter.network.Info
 import io.alienhead.gray.matter.network.Network
@@ -23,8 +32,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import io.swagger.codegen.languages.StaticDocCodegen
-import io.swagger.codegen.languages.SwaggerGenerator
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 
@@ -45,6 +52,8 @@ fun Application.module() {
             prettyPrint = true
         })
     }
+
+    setupSecurity()
 
     val network = Network(NetworkWebClient(), mutableListOf())
 
@@ -122,7 +131,7 @@ fun Application.module() {
 
                     network.addPeer(node, broadcast)
 
-                    call.respond(HttpStatusCode.Created)
+                    call.response.status(HttpStatusCode.Created)
                 }
             }
         }
@@ -164,14 +173,14 @@ fun Application.module() {
                     val hash = call.parameters["hash"]
 
                     if (hash.isNullOrBlank()) {
-                        call.respond(HttpStatusCode.BadRequest)
+                        call.response.status(HttpStatusCode.BadRequest)
                         return@get
                     }
 
                     val block = blockchain.getBlock(hash)
 
                     if (block == null) {
-                        call.respond(HttpStatusCode.NotFound)
+                        call.response.status(HttpStatusCode.NotFound)
                     } else {
                         call.respond(HttpStatusCode.OK, block)
                     }
@@ -195,28 +204,64 @@ fun Application.module() {
 
                 val article = call.receive<Article>()
 
-                if (article.publisherId == ""
+                if (article.publisherKey == ""
                     || article.byline == ""
                     || article.headline == ""
                     || article.section == ""
                     || article.content == ""
-                    || article.date == "") {
+                    || article.date == ""
+                    || article.signature == "") {
                     call.response.status(HttpStatusCode.BadRequest)
                     return@post
                 }
 
-                val mintedBlock = blockchain.processArticle(article)
+                val processedArticle = blockchain.processArticle(article)
 
-                if (mintedBlock != null) {
-                    call.application.engine.environment.log.info("Minted a new block: $mintedBlock")
+                if (!processedArticle.processed) {
+                    call.response.status(HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+                val newBlock = processedArticle.block
+                if (newBlock != null) {
+                    call.application.engine.environment.log.info("Minted a new block: $newBlock")
 
                     // Broadcast the new block to peers
-                    network.broadcastBlock(mintedBlock)
+                    network.broadcastBlock(newBlock)
 
                     call.response.status(HttpStatusCode.Created)
                 } else {
                     call.application.engine.environment.log.info("Processed a new article")
                     call.response.status(HttpStatusCode.OK)
+                }
+            }
+        }
+
+        route("/util") {
+            route("/crypto") {
+                route("/key-pair") {
+                    post {
+                        val keyPair = generateKeyPair()
+
+                        if (keyPair == null) {
+                            call.response.status(HttpStatusCode.InternalServerError)
+                            return@post
+                        }
+
+                        call.respond(HttpStatusCode.Created, KeyPairString(keyPair.first.getString(), keyPair.second.getString()))
+                    }
+                }
+
+                route("sign") {
+                    post {
+                        val signingPayload = call.receive<SigningPayload>()
+
+                        val privateKey = signingPayload.privateKey.toPrivateKey()
+
+                        val signature = sign(privateKey, signingPayload.data).toHexString()
+
+                        call.respond(HttpStatusCode.Created, Signature(signature))
+                    }
                 }
             }
         }

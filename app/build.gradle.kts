@@ -28,8 +28,9 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:$logback")
 
-    implementation(project(":network"))
     implementation(project(":blockchain"))
+    implementation(project(":crypto"))
+    implementation(project(":network"))
     implementation(project(":storage"))
     implementation(project(":sql"))
 }

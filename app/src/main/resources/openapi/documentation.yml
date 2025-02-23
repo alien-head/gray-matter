@@ -130,6 +130,36 @@ paths:
         "201":
           description: Created
 
+  /util/crypto/key-pair:
+    post:
+      summary: Generates a key pair
+      description: Generates an ECDSA key pair. Is not sent to the network peers or saved in the database.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyPairString'
+
+  /util/crypto/sign:
+    post:
+      summary: Signs data
+      description: Signs data with the given private key and returns the signature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SigningPayload'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signature'
+
 components:
   schemas:
     NodeInfo:
@@ -142,6 +172,7 @@ components:
           enum:
             - PUBLISHER
             - REPLICA
+            -
     Block:
       type: object
       properties:
@@ -157,3 +188,25 @@ components:
         height:
           type: integer
           format: int64
+
+    KeyPairString:
+      type: object
+      properties:
+        privateKey:
+          type: string
+        publicKey:
+          type: string
+
+    SigningPayload:
+      type: object
+      properties:
+        privateKey:
+          type: string
+        data:
+          type: string
+
+    Signature:
+      type: object
+      properties:
+        signature:
+          type: string
