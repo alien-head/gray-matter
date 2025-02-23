@@ -161,7 +161,7 @@ class NetworkWebClient: NetworkClient {
     }
 
     override suspend fun downloadPeerInfo(address: String): Info {
-        val response = runBlocking { client.get("$address/info") }
+        val response = runBlocking { client.get("$address/status") }
         if (response.status != HttpStatusCode.OK) {
             throw RuntimeException("Failed to download peer info with address: $address")
         }
@@ -190,7 +190,7 @@ class NetworkWebClient: NetworkClient {
             contentType(ContentType.Application.Json)
             setBody(node)
         } }
-        if (response.status != HttpStatusCode.OK) {
+        if (response.status != HttpStatusCode.Created) {
             // TODO since we have a list of nodes, go down the list and keep trying other nodes
             throw RuntimeException("Failed to submit self to the network to address: $address")
         }
