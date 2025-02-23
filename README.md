@@ -82,4 +82,7 @@ Examples of environment variable usage can be found in /idea/runConfigurations.
 * `NODE_MODE`: the mode to run the node in: `PUBLISHER` or `REPLICA`.
   * `PUBLISHER`: a node that has the ability to publish transactions (articles), mint blocks, and broadcast new blocks to the network.
   * `REPLICA`: a node that is a full replica of the network and blockchain. Receives updates from publisher nodes.
+  * `UTILITY`: a node that is running without a blockchain, network, or database. Useful for generating key-pairs and working with Gray Matter's local utilities. Most REST API endpoints are disabled in this mode. Database connection information is not required in this mode.
 * `PORT`: the given port for the app to run on. Defaults to 8081 if not provided.
+* `PUBLISHER_SIGNING_KEY`: A private ECDSA key used for signing blocks. Required if running a node in `PUBLISHER` mode.
+* `PUBLISHER_PUBLIC_KEY`: A public ECDSA key used as property of a block. Required if running a node in `PUBLISHER` mode.

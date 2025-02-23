@@ -25,6 +25,7 @@ data class Node(
 enum class NodeType {
     PUBLISHER,
     REPLICA,
+    UTILITY,
 }
 
 /**

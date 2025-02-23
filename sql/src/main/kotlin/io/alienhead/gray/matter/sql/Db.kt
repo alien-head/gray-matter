@@ -102,7 +102,7 @@ class Db(private val database: Database): Storage {
 object Blocks : UIntIdTable("block") {
     val hash: Column<String> = varchar("hash", 64)
     val previousHash: Column<String> = varchar("previous_hash", 64)
-    val data: Column<String> = varchar("data", 3000)
+    val data: Column<String> = varchar("data", 20000)
     val timestamp: Column<Long> = long("timestamp")
     val height: Column<UInt> = uinteger("height")
     val createDate: Column<Instant> = timestamp("create_date")
