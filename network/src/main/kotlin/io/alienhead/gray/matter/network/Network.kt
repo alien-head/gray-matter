@@ -1,6 +1,8 @@
 package io.alienhead.gray.matter.network
 
 import io.alienhead.gray.matter.blockchain.Block
+import io.alienhead.gray.matter.storage.Storage
+import io.alienhead.gray.matter.storage.StoreNode
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -52,9 +54,9 @@ data class NodeInfo(
 @Serializable
 data class Network(
     @Transient private val client: NetworkClient = NetworkWebClient(),
-    private val peers: MutableList<Node>,
+    private val storage: Storage,
 ) {
-    fun peers() = peers.toList()
+    fun peers() = storage.peers().map { it.toNode() }
 
     /**
      * Adds a node to the network.
@@ -63,10 +65,10 @@ data class Network(
      * A duplicate node has the same address.
      */
     private fun addPeer(participant: Node): Boolean {
-        val duplicateNodes = peers.firstOrNull { it.address == participant.address }
-        if (duplicateNodes != null) return false
+        val duplicateNode = storage.getNetworkPeer(participant.address)
+        if (duplicateNode != null) return false
 
-        peers.add(participant)
+        storage.addNetworkPeer(participant.toStore())
         return true
     }
 
@@ -83,7 +85,7 @@ data class Network(
 
         // Broadcast the addition of the node to the network
         if (broadcast == true && added) {
-            peers
+            storage.peers()
                 .filter {
                     it.address != node.address
                 }
@@ -97,19 +99,21 @@ data class Network(
     }
 
     suspend fun broadcastBlock(newBlock: Block) {
-        peers.forEach {
+        storage.peers().forEach {
             client.broadcastBlock(it.address, newBlock)
         }
     }
 
     suspend fun downloadPeers(donorNode: String) {
-        peers.addAll(client.downloadPeers(donorNode))
+        client.downloadPeers(donorNode).forEach {
+            storage.addNetworkPeer(StoreNode(it.address, it.type.name))
+        }
     }
 
     suspend fun downloadPeerInfo(peer: String) {
         val peerInfo = client.downloadPeerInfo(peer)
 
-        peers.add(peerInfo.node.toNode())
+        storage.addNetworkPeer(peerInfo.node.toNode().toStore())
     }
 
     suspend fun downloadBlocks(peer: String, page: Int, fromHeight: UInt?) = client.downloadBlocks(peer, page, fromHeight)
@@ -169,7 +173,7 @@ class NetworkWebClient: NetworkClient {
             throw RuntimeException("Failed to download peers from address: $address")
         }
 
-        return response.body<Network>().peers()
+        return response.body<List<Node>>()
     }
 
     override suspend fun downloadPeerInfo(address: String): Info {
@@ -220,3 +224,13 @@ class NetworkWebClient: NetworkClient {
         return response.body<List<Block>>()
     }
 }
+
+fun Node.toStore() = StoreNode(
+    address,
+    type.name
+)
+
+fun StoreNode.toNode() = Node(
+    address,
+    NodeType.valueOf(type)
+)

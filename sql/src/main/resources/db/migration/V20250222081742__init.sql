@@ -7,3 +7,9 @@ CREATE TABLE IF NOT EXISTS block (
     height BIGINT NOT NULL,
     create_date TIMESTAMP NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS network_peer (
+    id BIGSERIAL PRIMARY KEY,
+    address VARCHAR(30) NOT NULL,
+    type VARCHAR(12) NOT NULL
+)

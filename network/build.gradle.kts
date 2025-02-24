@@ -20,6 +20,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback")
 
     implementation(project(":blockchain"))
+    implementation(project(":storage"))
 
     testImplementation("io.kotest:kotest-runner-junit5:$kotest")
     testImplementation("io.kotest:kotest-assertions-core:$kotest")

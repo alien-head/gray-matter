@@ -65,7 +65,8 @@ fun Application.module() {
     environment.log.info("Starting up node as ${nodeInfo.type}")
 
     if (nodeInfo.type != NodeType.UTILITY) {
-        val network = Network(NetworkWebClient(), mutableListOf())
+        val storage = storage()
+        val network = Network(NetworkWebClient(), storage)
         if (nodeInfo.type == NodeType.PUBLISHER && publisherSigningKey == null) {
             throw RuntimeException("A Publisher Signing Key is required when starting a node in PUBLISHER mode.")
         }
@@ -78,7 +79,7 @@ fun Application.module() {
             throw RuntimeException("A Donor is required when starting a node in REPLICA mode.")
         }
 
-        val blockchain = Blockchain(storage())
+        val blockchain = Blockchain(storage)
         // If a donor node has been specified,
         // get the blockchain, transactions, and network from it
         if (donorNode != null) {
@@ -148,7 +149,7 @@ fun Application.module() {
                  * Mostly used to see all peers in the network.
                  */
                 get {
-                    call.respond(network)
+                    call.respond(network.peers())
                 }
 
                 route("/node") {

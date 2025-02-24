@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.alienhead.gray.matter.storage.Storage
 import io.alienhead.gray.matter.storage.StoreBlock
+import io.alienhead.gray.matter.storage.StoreNode
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.dao.id.UIntIdTable
 import org.jetbrains.exposed.sql.Column
@@ -98,6 +99,34 @@ class Db(private val database: Database): Storage {
             }
     }
 
+    override fun addNetworkPeer(peer: StoreNode): Unit = transaction(database) {
+        NetworkPeers.insert {
+            it[address] = peer.address
+            it[type] = peer.type
+        }
+    }
+
+    override fun getNetworkPeer(address: String) = transaction(database) {
+        NetworkPeers.selectAll()
+            .where { NetworkPeers.address eq address }
+            .singleOrNull()
+            ?.let {
+                StoreNode(
+                    it[NetworkPeers.address],
+                    it[NetworkPeers.type],
+                )
+            }
+    }
+
+    override fun peers(): List<StoreNode> = transaction(database) {
+        NetworkPeers.selectAll().map {
+            StoreNode(
+                it[NetworkPeers.address],
+                it[NetworkPeers.type],
+            )
+        }
+    }
+
     companion object {
         fun init(url: String, username: String, password: String): Db {
             val datasource = HikariDataSource(HikariConfig().apply {
@@ -124,4 +153,9 @@ object Blocks : UIntIdTable("block") {
     val timestamp: Column<Long> = long("timestamp")
     val height: Column<UInt> = uinteger("height")
     val createDate: Column<Instant> = timestamp("create_date")
+}
+
+object NetworkPeers: UIntIdTable("network_peer") {
+    val address: Column<String> = varchar("address", 30)
+    val type: Column<String> = varchar("type", 12)
 }
