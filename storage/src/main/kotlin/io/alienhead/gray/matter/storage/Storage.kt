@@ -8,6 +8,7 @@ interface Storage {
     fun latestBlock(): StoreBlock?
     fun chainSize(): Long
     fun blocks(page: Int, size: Int, sort: String?): List<StoreBlock>
+    fun blocksFromHeight(height: UInt, page: Int): List<StoreBlock>
 }
 
 data class StoreBlock(

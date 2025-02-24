@@ -80,6 +80,24 @@ class Db(private val database: Database): Storage {
             }
     }
 
+    override fun blocksFromHeight(height: UInt, page: Int): List<StoreBlock> = transaction(database) {
+        Blocks.selectAll()
+            .where { Blocks.height greater height }
+            .orderBy(Blocks.height to SortOrder.ASC)
+            .limit(10)
+            .offset((10 * page).toLong())
+            .map {
+                StoreBlock(
+                    it[Blocks.hash],
+                    it[Blocks.previousHash],
+                    it[Blocks.data],
+                    it[Blocks.timestamp],
+                    it[Blocks.height],
+                    it[Blocks.createDate],
+                )
+            }
+    }
+
     companion object {
         fun init(url: String, username: String, password: String): Db {
             val datasource = HikariDataSource(HikariConfig().apply {

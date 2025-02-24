@@ -92,22 +92,47 @@ fun Application.module() {
 
             environment.log.info("Done downloading peers.")
 
-            if (blockchain.chain(0, null, null).isEmpty()) {
+            if (blockchain.chain(0, null, null, null).isEmpty()) {
                 environment.log.info("Downloading full blockchain...")
-                val blocks = runBlocking { network.downloadBlockchain(donorNode) }
+                var page = 0
 
-                blocks.forEach { blockchain.processBlock(it) }
-
+                var newBlocks = runBlocking { network.downloadBlocks(donorNode, page, null).toMutableList() }
+                while(newBlocks.isNotEmpty()) {
+                    newBlocks.forEach { blockchain.processBlock(it) }
+                    page++
+                    newBlocks = runBlocking { network.downloadBlocks(donorNode, page, null).toMutableList() }
+                }
                 environment.log.info("Full blockchain downloaded from donor.")
             } else {
                 environment.log.info("Blockchain already downloaded.")
+                environment.log.info("Checking for missing blocks...")
+                val latestBlockFromDonor = runBlocking { network.getLatestBlock(donorNode) }
+
+                if (latestBlockFromDonor != null) {
+                    val latestBlockInChain = blockchain.chain(0, 1, "DESC", null).singleOrNull()
+
+                    if (latestBlockFromDonor.height > latestBlockInChain!!.height) {
+                        environment.log.info("Out-of-date blockchain detected. Downloading latest blocks...")
+                        var page = 0
+
+                        var newBlocks = runBlocking { network.downloadBlocks(donorNode, page, null).toMutableList() }
+                        while(newBlocks.isNotEmpty()) {
+                            newBlocks.forEach { blockchain.processBlock(it) }
+                            page++
+                            newBlocks = runBlocking { network.downloadBlocks(donorNode, page, null).toMutableList() }
+                        }
+                    } else {
+                        environment.log.info("Blockchain up-to-date.")
+                    }
+                }
+
             }
 
             environment.log.info("Adding self to the network...")
             // Update the donor node with the new peer
             runBlocking { network.updatePeer(donorNode, nodeInfo.toNode()) }
         } else {
-            if (blockchain.chain(0, null, null).isEmpty()) {
+            if (blockchain.chain(0, null, null, null).isEmpty()) {
                 environment.log.info("No donor node address found. Beginning genesis...")
                 blockchain.processBlock(Block.genesis())
             } else {
@@ -155,13 +180,14 @@ fun Application.module() {
                     val page = call.parameters["page"]?.toIntOrNull()
                     val size = call.parameters["size"]?.toIntOrNull()
                     val sort = call.parameters["sort"]
+                    val fromHeight = call.parameters["fromHeight"]?.toUIntOrNull()
 
                     if (page == null || page < 0 || (size != null && size < 1)) {
                         call.response.status(HttpStatusCode.BadRequest)
                         return@get
                     }
 
-                    val subchain = blockchain.chain(page, size, sort)
+                    val subchain = blockchain.chain(page, size, sort, fromHeight)
 
                     call.respond(HttpStatusCode.OK, subchain)
                 }
