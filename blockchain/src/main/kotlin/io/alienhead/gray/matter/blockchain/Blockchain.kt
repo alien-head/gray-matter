@@ -28,13 +28,19 @@ data class Blockchain(
     /**
      * Returns a set of blocks from the blockchain by page number and size.
      * If size is null, use the default of 10.
+     *
+     * If fromHeight is specified, the blocks are returned by pages of 10 in descending order by height.
      */
-    fun chain(page: Int, size: Int?, sort: String?): List<Block> {
+    fun chain(page: Int, size: Int?, sort: String?, fromHeight: UInt?): List<Block> {
 
         return if (page < 0) {
             emptyList()
         } else {
-            storage.blocks(page, size ?: 10, sort).toBlocks()
+            if (fromHeight == null) {
+                storage.blocks(page, size ?: 10, sort).toBlocks()
+            } else {
+                storage.blocksFromHeight(fromHeight, page).toBlocks()
+            }
         }
     }
 

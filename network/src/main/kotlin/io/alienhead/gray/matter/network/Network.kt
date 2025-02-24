@@ -1,7 +1,6 @@
 package io.alienhead.gray.matter.network
 
 import io.alienhead.gray.matter.blockchain.Block
-import io.alienhead.gray.matter.blockchain.Blockchain
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -113,19 +112,22 @@ data class Network(
         peers.add(peerInfo.node.toNode())
     }
 
-    suspend fun downloadBlockchain(peer: String) = client.downloadBlockchain(peer)
+    suspend fun downloadBlocks(peer: String, page: Int, fromHeight: UInt?) = client.downloadBlocks(peer, page, fromHeight)
 
     suspend fun updatePeer(peer: String, node: Node) {
         client.updatePeer(peer, node)
     }
+
+    suspend fun getLatestBlock(peer: String) = client.getLatestBlock(peer)
 }
 
 interface NetworkClient {
     suspend fun broadcastPeer(address: String, node: Node)
     suspend fun broadcastBlock(address: String, block: Block)
+    suspend fun getLatestBlock(address: String): Block?
     suspend fun downloadPeers(address: String): List<Node>
     suspend fun downloadPeerInfo(address: String): Info
-    suspend fun downloadBlockchain(address: String): List<Block>
+    suspend fun downloadBlocks(address: String, page: Int, fromHeight: UInt?): List<Block>
     suspend fun updatePeer(address: String, node: Node)
 }
 
@@ -150,6 +152,16 @@ class NetworkWebClient: NetworkClient {
         }
     }
 
+    override suspend fun getLatestBlock(address: String): Block? {
+        val response = runBlocking { client.get("$address/blockchain?page=0&size=1&sort=DESC") }
+
+        if (response.status != HttpStatusCode.OK) {
+            throw RuntimeException("Failed to fetch latest block from address: $address")
+        }
+
+        return response.body<List<Block>>().singleOrNull()
+    }
+
     override suspend fun downloadPeers(address: String): List<Node> {
         val response = runBlocking  { client.get("$address/network") }
 
@@ -169,20 +181,15 @@ class NetworkWebClient: NetworkClient {
         return response.body<Info>()
     }
 
-    override suspend fun downloadBlockchain(address: String): List<Block> {
-        // Download the blockchain
-        var page = 0
+    override suspend fun downloadBlocks(address: String, page: Int, fromHeight: UInt?): List<Block> {
 
-        var newBlocks = downloadBlockchain(address, page).toMutableList()
+        return if (fromHeight == null) {
+            downloadBlocks(address, page).toMutableList()
 
-        val blocks = newBlocks.toMutableList()
-        while (newBlocks.isNotEmpty()) {
-            page++
-            newBlocks = downloadBlockchain(address, page).toMutableList()
-            blocks.addAll(newBlocks)
+        } else {
+            downloadBlocksFromHeight(address, page, fromHeight)
         }
 
-        return blocks
     }
 
     override suspend fun updatePeer(address: String, node: Node) {
@@ -197,10 +204,18 @@ class NetworkWebClient: NetworkClient {
     }
 
     // TODO since we have a list of nodes, we should be able to pick back up from another node if this donor goes down
-    private suspend fun downloadBlockchain(address: String, page: Int): List<Block> {
+    private suspend fun downloadBlocks(address: String, page: Int): List<Block> {
         val response = client.get("$address/blockchain?page=$page&size=10")
         if (response.status != HttpStatusCode.OK) {
             throw RuntimeException("Failed to download the blockchain from address: $address")
+        }
+        return response.body<List<Block>>()
+    }
+
+    private suspend fun downloadBlocksFromHeight(address: String, page: Int, fromHeight: UInt): List<Block> {
+        val response = client.get("$address/blockchain?page=$page&size=10&fromHeight=$fromHeight")
+        if (response.status != HttpStatusCode.OK) {
+            throw RuntimeException("Failed to download the blocks from address: $address with fromHeight: $fromHeight")
         }
         return response.body<List<Block>>()
     }
