@@ -54,7 +54,7 @@ class BlockchainTest : DescribeSpec({
                     randomBlock("", 9u).toStore(),
                 )
 
-                blockchain.chain(0, null, null) shouldHaveSize 10
+                blockchain.chain(0, null, null, null) shouldHaveSize 10
             }
 
             it("should return a list of 5 blocks when size of 5 is selected") {
@@ -77,8 +77,8 @@ class BlockchainTest : DescribeSpec({
                     randomBlock("", 9u).toStore(),
                 )
 
-                blockchain.chain(0, 5, null) shouldHaveSize 5
-                blockchain.chain(1, 5, null) shouldHaveSize 5
+                blockchain.chain(0, 5, null, null) shouldHaveSize 5
+                blockchain.chain(1, 5, null, null) shouldHaveSize 5
             }
         }
 
