@@ -92,19 +92,27 @@ fun Application.module() {
 
             environment.log.info("Done downloading peers.")
 
-            environment.log.info("Downloading full blockchain...")
-            val blocks = runBlocking { network.downloadBlockchain(donorNode) }
+            if (blockchain.chain(0, null, null).isEmpty()) {
+                environment.log.info("Downloading full blockchain...")
+                val blocks = runBlocking { network.downloadBlockchain(donorNode) }
 
-            environment.log.info("Full blockchain downloaded from donor.")
+                blocks.forEach { blockchain.processBlock(it) }
+
+                environment.log.info("Full blockchain downloaded from donor.")
+            } else {
+                environment.log.info("Blockchain already downloaded.")
+            }
 
             environment.log.info("Adding self to the network...")
             // Update the donor node with the new peer
             runBlocking { network.updatePeer(donorNode, nodeInfo.toNode()) }
-
-            blocks.forEach { blockchain.processBlock(it) }
         } else {
-            environment.log.info("No donor node address found. Beginning genesis...")
-            blockchain.processBlock(Block.genesis())
+            if (blockchain.chain(0, null, null).isEmpty()) {
+                environment.log.info("No donor node address found. Beginning genesis...")
+                blockchain.processBlock(Block.genesis())
+            } else {
+                environment.log.info("No donor node address found. Blockchain already detected.")
+            }
         }
 
         routing {
